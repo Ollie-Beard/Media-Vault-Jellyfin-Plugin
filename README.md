@@ -11,6 +11,7 @@ The plugin is designed around Jellyfin's supported **Channel** architecture. Cat
 - [Prerequisites](#prerequisites)
 - [Compatibility](#compatibility)
 - [What the Plugin Does](#what-the-plugin-does)
+- [Installation](#installation)
 - [Main Features](#main-features)
 - [Architecture](#architecture)
 - [Jellyfin Channels](#jellyfin-channels)
@@ -27,7 +28,6 @@ The plugin is designed around Jellyfin's supported **Channel** architecture. Cat
 - [Download Progress](#download-progress)
 - [Sort Title Synchronisation](#sort-title-synchronisation)
 - [Configuration](#configuration)
-- [Installation](#installation)
 - [Building From Source](#building-from-source)
 - [Release Packaging](#release-packaging)
 - [Catalogue Data Model](#catalogue-data-model)
@@ -168,6 +168,140 @@ At a high level:
 ```
 
 The plugin does not perform Google authentication or directly download Google Photos media. Those responsibilities belong to GPhotosDL.
+
+---
+
+## Installation
+
+The current GitHub Release provides the following relevant assets:
+- `MediaVault.Jellyfin.dll`
+- `Media_Vault.js`
+- `jellyfin-javascript-injector-scripts.json`
+- `Plugin.+.JS.Injection.zip`
+
+You can download the individual files or use the bundled ZIP.
+
+#### 1. Stop Jellyfin
+
+Stop the Jellyfin server before replacing or installing the plugin DLL.
+
+#### 2. Locate the Jellyfin Data Directory
+
+The plugin must be placed inside Jellyfin's plugins directory.
+
+The general structure should be:
+
+```
+<Jellyfin Data Directory>
+└── plugins
+    └── MediaVault.Jellyfin
+        └── MediaVault.Jellyfin.dll
+```
+
+If using a portable Jellyfin installation with a Data directory, this may look like:
+
+```
+Jellyfin
+└── Data
+    └── plugins
+        └── MediaVault.Jellyfin
+            └── MediaVault.Jellyfin.dll
+```
+
+On a Windows Jellyfin installation, the exact data directory depends on how Jellyfin was installed. Common locations include:
+
+`C:\ProgramData\Jellyfin\Server\plugins`
+
+or:
+
+`C:\Users\<YourUser>\AppData\Local\jellyfin\plugins`
+
+Jellyfin's current documentation lists `%ProgramData%\Jellyfin\Server\plugins` for tray installations and `%UserProfile%\AppData\Local\jellyfin\plugins` for direct installations.
+
+The important part is that the plugin DLL goes into the server's:
+
+`plugins\MediaVault.Jellyfin\`
+
+directory.
+
+#### 3. Create a Dedicated Plugin Folder
+
+Do not simply place the DLL loose inside the main plugins directory.
+
+Create:
+`plugins\MediaVault.Jellyfin`
+
+Then place:
+`MediaVault.Jellyfin.dll`
+
+inside it.
+
+Final structure:
+```
+plugins
+└── MediaVault.Jellyfin
+    └── MediaVault.Jellyfin.dll
+```
+
+Do not put the DLL inside another plugin's directory.
+
+#### 4. Install the Supporting Jellyfin Plugins
+
+Before restarting Jellyfin, make sure both supporting plugins have been installed.
+
+**File Transformation:**
+Add `https://www.iamparadox.dev/jellyfin/plugins/manifest.json`, then install File Transformation.
+
+**JS Injector:**
+Add `https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11/manifest.json`, then install JS Injector.
+
+Both are required for the Media Vault JavaScript interface.
+
+[For more guidance and information about installing these two supporting plugins and setting up the JavaScript Injection Component Click Here](#javascript-injection-component)
+
+#### 5. Start Jellyfin
+
+Start Jellyfin again.
+
+The Media Vault plugin should now appear under:
+
+**Dashboard** → **Plugins** → **Installed**
+
+Open:
+**Media Vault Cloud Catalogue**
+
+and configure the catalogue and GPhotosDL settings.
+
+#### 6. Install the Media Vault JavaScript
+
+After Jellyfin has restarted, navigate to:
+
+**Dashboard** → **Plugins** → **JS Injector**
+
+There are two ways to install the Media Vault JavaScript:
+
+- **Option A — Import the JSON configuration:** Use `jellyfin-javascript-injector-scripts.json` with the JS Injector import function, then click Save.
+- **Option B — Copy and paste the JavaScript:** Use `Media_Vault.js`. Add a new JS Injector script and copy/paste the complete contents of the JavaScript file into it, then click Save.
+
+These two options install the same Media Vault JavaScript. You only need to use one.
+
+After saving the configuration, refresh the Jellyfin page so that the changes take effect.
+
+#### 7. Configure Media Vault and GPhotosDL
+
+Open:
+**Dashboard** → **Plugins** → **Media Vault Cloud Catalogue**
+
+Configure:
+- Catalogue source.
+- GPhotosDL URL.
+- Movie download directory.
+- TV Shows download directory.
+- Formula 1 download directory.
+- Catalogue refresh settings.
+- Playback startup buffer settings.
+
+Remember that each download directory must also be configured as a path in the corresponding local Jellyfin library.
 
 ---
 
@@ -928,177 +1062,6 @@ Maximum amount of data to buffer before playback.
 - Default: **3 GB**
 
 These values can be adjusted depending on download speed, file sizes and the playback devices being used.
-
----
-
-## Installation
-
-There are two intended ways of installing the Media Vault Jellyfin plugin itself:
-1. Jellyfin Plugin Repository / Manifest
-2. Manual DLL installation
-
-Both installation methods still require the supporting File Transformation and JS Injector plugins described in the Prerequisites section.
-
-The Media Vault JavaScript is also required for the Media Vault web interface.
-
-### Method 1 — Plugin Repository
-
-Once the Media Vault plugin manifest has been published, it can be installed through Jellyfin's plugin repository system.
-
-The Media Vault repository manifest is:
-
-`https://raw.githubusercontent.com/Ollie-Beard/Media-Vault-Jellyfin-Plugin/main/manifest.json`
-
-*(If the manifest has not yet been committed to the repository, this URL will not work until `manifest.json` has been added to the main branch).*
-
-To install:
-1. Open Jellyfin.
-2. Go to **Dashboard** → **Plugins**.
-3. Open **Manage Repositories**.
-4. Add a new repository.
-5. Enter the Media Vault manifest URL.
-6. Save the repository.
-7. Find Media Vault in the plugin catalogue.
-8. Install it.
-9. Restart Jellyfin if requested.
-
-The repository manifest allows Jellyfin to discover plugin releases and their associated binaries.
-
-After installing the Media Vault plugin, the supporting File Transformation and JS Injector plugins still need to be installed using the manifests in the Prerequisites section.
-
-The Media Vault JavaScript must then be installed using one of the two JS Injector methods described in the JavaScript Injection Component section.
-
-### Method 2 — Manual DLL Installation
-
-Manual installation is useful for development builds or when installing a release before the repository manifest is available.
-
-The current GitHub Release provides the following relevant assets:
-- `MediaVault.Jellyfin.dll`
-- `Media_Vault.js`
-- `jellyfin-javascript-injector-scripts.json`
-- `Plugin.+.JS.Injection.zip`
-
-You can download the individual files or use the bundled ZIP.
-
-#### 1. Stop Jellyfin
-
-Stop the Jellyfin server before replacing or installing the plugin DLL.
-
-#### 2. Locate the Jellyfin Data Directory
-
-The plugin must be placed inside Jellyfin's plugins directory.
-
-The general structure should be:
-
-```
-<Jellyfin Data Directory>
-└── plugins
-    └── MediaVault.Jellyfin
-        └── MediaVault.Jellyfin.dll
-```
-
-If using a portable Jellyfin installation with a Data directory, this may look like:
-
-```
-Jellyfin
-└── Data
-    └── plugins
-        └── MediaVault.Jellyfin
-            └── MediaVault.Jellyfin.dll
-```
-
-On a Windows Jellyfin installation, the exact data directory depends on how Jellyfin was installed. Common locations include:
-
-`C:\ProgramData\Jellyfin\Server\plugins`
-
-or:
-
-`C:\Users\<YourUser>\AppData\Local\jellyfin\plugins`
-
-Jellyfin's current documentation lists `%ProgramData%\Jellyfin\Server\plugins` for tray installations and `%UserProfile%\AppData\Local\jellyfin\plugins` for direct installations.
-
-The important part is that the plugin DLL goes into the server's:
-
-`plugins\MediaVault.Jellyfin\`
-
-directory.
-
-#### 3. Create a Dedicated Plugin Folder
-
-Do not simply place the DLL loose inside the main plugins directory.
-
-Create:
-`plugins\MediaVault.Jellyfin`
-
-Then place:
-`MediaVault.Jellyfin.dll`
-
-inside it.
-
-Final structure:
-```
-plugins
-└── MediaVault.Jellyfin
-    └── MediaVault.Jellyfin.dll
-```
-
-Do not put the DLL inside another plugin's directory.
-
-#### 4. Install the Supporting Jellyfin Plugins
-
-Before restarting Jellyfin, make sure both supporting plugins have been installed.
-
-**File Transformation:**
-Add `https://www.iamparadox.dev/jellyfin/plugins/manifest.json`, then install File Transformation.
-
-**JS Injector:**
-Add `https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11/manifest.json`, then install JS Injector.
-
-Both are required for the Media Vault JavaScript interface.
-
-#### 5. Start Jellyfin
-
-Start Jellyfin again.
-
-The Media Vault plugin should now appear under:
-
-**Dashboard** → **Plugins** → **Installed**
-
-Open:
-**Media Vault Cloud Catalogue**
-
-and configure the catalogue and GPhotosDL settings.
-
-#### 6. Install the Media Vault JavaScript
-
-After Jellyfin has restarted, navigate to:
-
-**Dashboard** → **Plugins** → **JS Injector**
-
-There are two ways to install the Media Vault JavaScript:
-
-- **Option A — Import the JSON configuration:** Use `jellyfin-javascript-injector-scripts.json` with the JS Injector import function, then click Save.
-- **Option B — Copy and paste the JavaScript:** Use `Media_Vault.js`. Add a new JS Injector script and copy/paste the complete contents of the JavaScript file into it, then click Save.
-
-These two options install the same Media Vault JavaScript. You only need to use one.
-
-After saving the configuration, refresh the Jellyfin page so that the changes take effect.
-
-#### 7. Configure Media Vault and GPhotosDL
-
-Open:
-**Dashboard** → **Plugins** → **Media Vault Cloud Catalogue**
-
-Configure:
-- Catalogue source.
-- GPhotosDL URL.
-- Movie download directory.
-- TV Shows download directory.
-- Formula 1 download directory.
-- Catalogue refresh settings.
-- Playback startup buffer settings.
-
-Remember that each download directory must also be configured as a path in the corresponding local Jellyfin library.
 
 ---
 
