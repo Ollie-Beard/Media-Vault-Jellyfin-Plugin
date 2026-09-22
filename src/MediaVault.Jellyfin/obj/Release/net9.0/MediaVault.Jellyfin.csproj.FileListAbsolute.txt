@@ -1,0 +1,12 @@
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\bin\Release\net9.0\MediaVault.Jellyfin.deps.json
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\bin\Release\net9.0\MediaVault.Jellyfin.dll
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\bin\Release\net9.0\MediaVault.Jellyfin.pdb
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\obj\Release\net9.0\MediaVault.Jellyfin.csproj.AssemblyReference.cache
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\obj\Release\net9.0\MediaVault.Jellyfin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\obj\Release\net9.0\MediaVault.Jellyfin.AssemblyInfoInputs.cache
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\obj\Release\net9.0\MediaVault.Jellyfin.AssemblyInfo.cs
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\obj\Release\net9.0\MediaVault.Jellyfin.csproj.CoreCompileInputs.cache
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\obj\Release\net9.0\MediaVault.Jellyfin.dll
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\obj\Release\net9.0\refint\MediaVault.Jellyfin.dll
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\obj\Release\net9.0\MediaVault.Jellyfin.pdb
+C:\Users\Ollie\Documents\media-vault\jellyfin-media-vault\src\MediaVault.Jellyfin\obj\Release\net9.0\ref\MediaVault.Jellyfin.dll

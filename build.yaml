@@ -1,0 +1,14 @@
+---
+name: "Media Vault Cloud Catalogue"
+guid: "f0413623-c78e-45e7-a114-352b0bfb205f"
+version: "0.1.0.0"
+targetAbi: "10.11.11.0"
+framework: "net9.0"
+overview: "Browse Media Vault cloud-backed films through a Jellyfin Channel."
+description: >
+  Imports a Media Vault JSON catalogue and exposes cloud-backed movies through
+  Jellyfin's supported Channel architecture. Playback is intentionally deferred.
+category: "General"
+owner: "Ollie"
+artifacts:
+- "MediaVault.Jellyfin.dll"
