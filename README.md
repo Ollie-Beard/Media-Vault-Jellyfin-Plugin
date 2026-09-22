@@ -114,7 +114,6 @@ Before installing the Media Vault Jellyfin plugin, the Jellyfin server and the s
 
 This plugin currently targets:
 
-```text
 Jellyfin Server 10.11.11
 
 The plugin is version-specific and should be treated as being built for Jellyfin 10.11.11.
