@@ -1,0 +1,20 @@
+[
+  {
+    "category": "General",
+    "guid": "f0413623-c78e-45e7-a114-352b0bfb205f",
+    "name": "Media Vault",
+    "description": "Media Vault catalogue, GPhotosDL downloads and native Jellyfin playback.",
+    "owner": "Ollie-Beard",
+    "overview": "Connect Media Vault to Jellyfin with cloud catalogue browsing and on-demand Google Photos downloads.",
+    "versions": [
+      {
+        "checksum": "e1b9aed205a49d555c626f7f46073530ccd3e26b86dbf24e8f03e85ccca18bb0",
+        "changelog": "Initial release.",
+        "targetAbi": "10.11.11.0",
+        "sourceUrl": "https://github.com/Ollie-Beard/Media-Vault-Jellyfin-Plugin/releases/download/Media-Vault-Jellyfin-Plugin/MediaVault.Jellyfin.dll.zip",
+        "timestamp": "2026-09-22 13:43:00",
+        "version": "1.0.0.0"
+      }
+    ]
+  }
+]
