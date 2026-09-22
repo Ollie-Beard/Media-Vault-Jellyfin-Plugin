@@ -1,57 +1,1212 @@
 # Media Vault for Jellyfin
 
-An isolated Jellyfin server-plugin project for Jellyfin **Server/Web 10.11.11**. It imports the existing Media Vault JSON export, preserves the last successful catalogue, and exposes eligible cloud films through Jellyfin's supported **Channel** architecture without pretending they are local files.
+A custom Jellyfin server plugin for **Media Vault**, providing Jellyfin with a cloud-backed catalogue of Movies, TV Shows and Formula 1 content, integrated with **GPhotosDL** for on-demand Google Photos downloads and native Jellyfin playback.
 
-## Important compatibility gate
+The plugin is designed around Jellyfin's supported **Channel** architecture. Catalogue metadata is exposed to Jellyfin without pretending cloud content is already a local media file. When playback/download is requested, the plugin coordinates with GPhotosDL to download the real media file locally, allowing Jellyfin to use its normal media pipeline.
 
-This package targets Jellyfin **10.11.11 / net9.0**. `Directory.Packages.props` is pinned to 10.11.11; do not change it unless the server is upgraded and compatibility is retested.
+> **Jellyfin Plugin Repository / Manifest:**
+> **`<ADD MANIFEST URL HERE>`**
+>
+> Once the repository manifest is hosted, this URL can be added to **Jellyfin → Dashboard → Plugins → Manage Repositories** for repository-based installation and updates.
 
-The Channel framework is Jellyfin's supported virtual-content model: Jellyfin owns the resulting Channel-backed `Movie` records while the plugin supplies file-less catalogue metadata. It does not create placeholder files or write `jellyfin.db` directly. See `docs/CHANNEL_ARCHITECTURE.md`.
+---
 
-## What is included
+## Compatibility
 
-- Configurable local-path or HTTP(S) JSON source.
-- Strict root validation; isolated malformed-record errors; duplicate-ID detection.
-- Eligibility: `savedToGooglePhotos == true` plus an absolute `http`/`https` `googlePhotosLink`.
-- Deterministic UUIDv5-style IDs derived from Media Vault record IDs.
-- Last-known-good, atomic JSON cache; a failed refresh never clears it.
-- Channel hierarchy: **Media Vault → Cloud Movies**, containing Movie-style records.
-- Startup/periodic cached catalogue refresh plus manual refresh, status API and configuration page.
-- Metadata mapping including TMDb artwork URLs, cast/director, collections and storage facts.
-- Unit-test project (requires a .NET SDK to run).
+| Component       | Version                                                  |
+| --------------- | -------------------------------------------------------- |
+| Jellyfin Server | **10.11.11**                                             |
+| .NET            | **9.0**                                                  |
+| Plugin target   | `net9.0`                                                 |
+| Media Vault     | Current Media Vault catalogue/API format                 |
+| GPhotosDL       | HTTP API compatible with the plugin's download endpoints |
 
-## Build and package
+`Directory.Packages.props` is pinned to Jellyfin **10.11.11**.
 
-Install the .NET 9 SDK, then from this directory:
+This plugin should be treated as version-specific. Do not change the Jellyfin package version or target framework unless the plugin has been rebuilt and tested against the corresponding Jellyfin server version.
+
+---
+
+## What the Plugin Does
+
+The plugin connects Jellyfin to an existing Media Vault installation.
+
+At a high level:
+
+```text
+                         Media Vault
+                             │
+                             │ Catalogue JSON/API
+                             ▼
+                    ┌───────────────────┐
+                    │   CatalogueStore  │
+                    │                   │
+                    │ Last-known-good   │
+                    │ local cache       │
+                    └─────────┬─────────┘
+                              │
+             ┌────────────────┼────────────────┐
+             │                │                │
+             ▼                ▼                ▼
+      Movies Channel    TV Shows Channel   Formula 1 Channel
+             │                │                │
+             └────────────────┼────────────────┘
+                              │
+                              ▼
+                         Jellyfin
+                              │
+                     User requests media
+                              │
+                              ▼
+                    Media Vault Downloads
+                              │
+                              ▼
+                         GPhotosDL
+                              │
+                              ▼
+                       Google Photos
+                              │
+                              ▼
+                      Local MKV file
+                              │
+                              ▼
+                    Jellyfin native playback
+```
+
+The plugin does **not** perform Google authentication or directly download Google Photos media. Those responsibilities belong to GPhotosDL.
+
+---
+
+# Main Features
+
+- Jellyfin Channel integration for:
+  - **Movies**
+  - **TV Shows**
+  - **Formula 1**
+- Local filesystem or HTTP(S) catalogue source.
+- Last-known-good catalogue caching.
+- Atomic catalogue cache updates.
+- Catalogue refresh on startup and periodically in the background.
+- Manual catalogue refresh from the plugin configuration page.
+- Catalogue status and movie information endpoints.
+- Media Vault metadata mapped into Jellyfin.
+- TMDb metadata and artwork URLs.
+- Cast and director information.
+- Genres and collections.
+- Release dates and age ratings.
+- Runtime information.
+- Resolution and storage metadata.
+- Deterministic Jellyfin IDs derived from Media Vault IDs.
+- GPhotosDL integration for on-demand downloads.
+- Download progress, speed and ETA information.
+- Download cancellation.
+- Detection of already-cached local files.
+- Cached runtime estimation for partially downloaded media.
+- Configurable playback startup buffering.
+- Automatic Jellyfin sort-title synchronisation.
+- Dedicated configuration UI.
+- Unit tests for catalogue mapping and channel item creation.
+- No direct writes to `jellyfin.db`.
+- No fake placeholder media files.
+
+---
+
+# Architecture
+
+## Catalogue
+
+The plugin consumes the Media Vault catalogue rather than owning the underlying Media Vault database.
+
+The catalogue can be supplied from:
+
+- A local filesystem path.
+- An HTTP URL.
+- An HTTPS URL.
+
+The source is loaded by `CatalogueStore`.
+
+The catalogue is validated and mapped into the plugin's internal models before being exposed to Jellyfin.
+
+The plugin maintains a local cache containing the most recently successful catalogue.
+
+### Last-known-good behaviour
+
+A failed catalogue refresh does **not** destroy the previous successful catalogue.
+
+The refresh process is effectively:
+
+```text
+Catalogue source
+      │
+      ▼
+Read JSON
+      │
+      ▼
+Validate / map
+      │
+      ├── Failed ──────► Keep previous catalogue
+      │
+      ▼
+Successful catalogue
+      │
+      ▼
+Write temporary cache
+      │
+      ▼
+Atomic replacement
+      │
+      ▼
+New active catalogue
+```
+
+This means a temporary network failure, malformed response or unavailable Media Vault server does not immediately make the existing Jellyfin catalogue disappear.
+
+---
+
+# Jellyfin Channels
+
+The plugin registers three Jellyfin Channels:
+
+```text
+Media Vault
+├── Movies
+├── TV Shows
+└── Formula 1
+```
+
+The exact channel presentation is controlled by Jellyfin's Channel system and may therefore differ slightly between Jellyfin clients.
+
+## Movies
+
+Movies are exposed as Jellyfin Channel-backed Movie items.
+
+The plugin maps Media Vault information such as:
+
+- Title
+- Sort title
+- Overview
+- Release date
+- Runtime
+- Age rating
+- Genres
+- Collections
+- TMDb ID
+- Poster
+- Backdrop
+- Cast
+- Director
+- Rating
+- Resolution
+- Medium
+- File size
+- Media Vault ID
+
+## TV Shows
+
+TV content is represented hierarchically:
+
+```text
+TV Shows
+└── Show
+    └── Season
+        └── Episode
+```
+
+The catalogue contains information for:
+
+- TV shows
+- Seasons
+- Episodes
+- Episode numbers
+- Air dates
+- Runtime
+- TMDb episode IDs
+- Posters/stills
+- Ratings
+- Resolution
+- Medium
+- File sizes
+- Google Photos links
+
+## Formula 1
+
+Formula 1 content is represented hierarchically:
+
+```text
+Formula 1
+└── Season / Year
+    └── Round
+        └── Event
+```
+
+Events can include:
+
+- Sprint Qualifying
+- Sprint
+- Qualifying
+- Race
+
+The plugin maintains deterministic ordering for known event types so that a normal race weekend is presented in the expected sequence.
+
+---
+
+# Jellyfin Channel Architecture
+
+The plugin deliberately uses Jellyfin's supported Channel architecture rather than attempting to manufacture ordinary library files.
+
+The plugin does **not**:
+
+- Create fake media files.
+- Insert arbitrary rows into `jellyfin.db`.
+- Pretend a Google Photos item is already a local file.
+- Directly manage Jellyfin's Channel database records.
+
+Instead, the plugin supplies catalogue metadata and allows Jellyfin's Channel infrastructure to manage the resulting Channel-backed items.
+
+The important distinction is:
+
+```text
+Media Vault catalogue
+        │
+        ▼
+     Plugin
+        │
+        ▼
+ Jellyfin Channel
+        │
+        ▼
+Jellyfin-managed Channel Movie/TV items
+```
+
+For more detail, see:
+
+- `docs/CHANNEL_ARCHITECTURE.md`
+- `docs/NATIVE_LIBRARY_SPIKE.md`
+
+---
+
+# GPhotosDL Integration
+
+The plugin does not contain Google Photos authentication or downloading logic.
+
+Instead, it communicates with a separate **GPhotosDL** server through its HTTP API.
+
+```text
+Jellyfin Plugin
+      │
+      │ HTTP
+      ▼
+   GPhotosDL
+      │
+      ▼
+ Google Photos
+```
+
+This separation keeps the Jellyfin plugin responsible for Jellyfin integration while GPhotosDL remains responsible for Google Photos access and downloading.
+
+## Required GPhotosDL API
+
+The plugin uses the following GPhotosDL endpoints:
+
+```text
+POST   /download
+GET    /download/{id}
+DELETE /download/{id}
+```
+
+The plugin sends the Google Photos URL, target filename and destination directory when starting a download.
+
+GPhotosDL then provides the byte-level download status.
+
+---
+
+# Download System
+
+The plugin exposes its own Jellyfin-side download API so that Jellyfin clients and the Media Vault JavaScript interface do not need direct access to the GPhotosDL server.
+
+```text
+Jellyfin Client
+      │
+      ▼
+Media Vault Jellyfin Plugin
+      │
+      ▼
+GPhotosDL
+      │
+      ▼
+Google Photos
+```
+
+This is intentional.
+
+A Jellyfin client only needs access to the Jellyfin server. It does **not** need to connect directly to GPhotosDL on port `8282`.
+
+## Download endpoints
+
+The plugin provides:
+
+```text
+POST   /MediaVault/Downloads/start
+GET    /MediaVault/Downloads/catalogue
+GET    /MediaVault/Downloads
+GET    /MediaVault/Downloads/{mediaVaultId}
+DELETE /MediaVault/Downloads/{mediaVaultId}
+```
+
+These endpoints provide functionality including:
+
+- Starting a download.
+- Viewing active downloads.
+- Viewing cached files.
+- Checking progress.
+- Checking download speed.
+- Checking ETA.
+- Cancelling downloads.
+- Determining cached runtime.
+- Identifying the corresponding Media Vault item.
+
+---
+
+# Local Media Storage
+
+The download location is configurable separately for:
+
+- Movies
+- TV Shows
+- Formula 1
+
+The plugin generates safe filesystem paths from catalogue metadata.
+
+The general layout is:
+
+```text
+Movies
+└── Movie Title.mkv
+```
+
+```text
+TV Shows
+└── Show Name
+    └── Season Name
+        └── Episode.mkv
+```
+
+```text
+Formula 1
+└── Year
+    └── Round
+        └── Event Type.mkv
+```
+
+Invalid filename characters are replaced with `_` when necessary.
+
+The actual configured root directories are controlled through the plugin configuration page.
+
+---
+
+# Playback Startup Buffer
+
+Google Photos downloads can take time to complete.
+
+The plugin therefore supports starting playback while a file is still downloading, provided enough of the file has already been downloaded.
+
+The configurable startup settings are:
+
+- Maximum startup wait time.
+- Startup buffer percentage.
+- Minimum startup buffer in GB.
+- Maximum startup buffer in GB.
+
+The basic process is:
+
+```text
+Playback requested
+       │
+       ▼
+Start Google Photos download
+       │
+       ▼
+Wait for sufficient local data
+       │
+       ▼
+Expose/use real local MKV
+       │
+       ▼
+Jellyfin native playback
+```
+
+The purpose of the startup buffer is to give Jellyfin/FFmpeg enough data at the beginning of the file before playback begins, reducing the chance of the playback pipeline reaching the end of a still-growing file immediately.
+
+The plugin does not manufacture a fake `MediaSourceInfo` or fake media file to accomplish this.
+
+---
+
+# Cached Files
+
+If the requested media already exists locally, the plugin does not start another Google Photos download.
+
+Instead it identifies the existing file as cached.
+
+Cached media can therefore remain usable even after:
+
+- Jellyfin has restarted.
+- The GPhotosDL job is no longer present in the plugin's in-memory job list.
+- The original download process has completed.
+
+The download API checks the configured local storage locations when determining whether media is already cached.
+
+---
+
+# Download Progress
+
+The plugin exposes GPhotosDL's download information including:
+
+- Downloaded bytes
+- Total bytes
+- Percentage
+- Download speed
+- Speed in MB/s
+- Estimated time remaining
+- Error information
+- Runtime
+- Cached runtime
+- Cached runtime percentage
+
+For an active download, cached runtime is estimated from:
+
+```text
+Runtime × downloaded bytes / total bytes
+```
+
+For a completed/cached file, cached runtime is treated as the full runtime.
+
+This information is used by the Media Vault Jellyfin web UI to present download progress to users.
+
+---
+
+# Sort Title Synchronisation
+
+Media Vault has its own `sortTitle` values.
+
+Jellyfin Channel Movies can maintain their own sort names, so the plugin includes `MediaVaultSortTitleHostedService` to keep the Jellyfin Channel items aligned with the Media Vault catalogue.
+
+The service:
+
+1. Finds the Media Vault Channel.
+2. Finds existing Channel-backed Movie items.
+3. Identifies the corresponding Media Vault ID.
+4. Looks up the catalogue record.
+5. Applies the Media Vault `sortTitle` when necessary.
+
+This is performed against existing Jellyfin items rather than by directly modifying `jellyfin.db`.
+
+The service also listens for relevant Jellyfin item events so new or updated Channel Movies can be reconciled.
+
+---
+
+# Configuration
+
+Open:
+
+**Dashboard → Plugins → Media Vault Cloud Catalogue**
+
+The configuration page provides the following settings.
+
+## Catalogue
+
+### Catalogue Source
+
+The source of the Media Vault catalogue.
+
+Examples:
+
+```text
+http://192.168.1.1:xxxx/api/jellyfin/catalogue
+```
+
+or a server-local file path.
+
+The plugin supports HTTP and HTTPS URLs as well as local filesystem paths.
+
+### Request Timeout
+
+Controls how long catalogue/GPhotosDL HTTP operations are allowed to wait.
+
+---
+
+## GPhotosDL
+
+### GPhotosDL URL
+
+The base URL of the GPhotosDL server.
+
+For example:
+
+```text
+http://192.168.1.1:8282
+```
+
+The Jellyfin server must be able to reach this service.
+
+The Jellyfin client does not need direct access to this address.
+
+The configuration page also provides a connection test.
+
+---
+
+## Download Directories
+
+Separate directories can be configured for:
+
+- Movies
+- TV Shows
+- Formula 1
+
+These directories must be writable by the Jellyfin server process.
+
+---
+
+## Catalogue Refresh
+
+### Automatic Refresh Interval
+
+Controls how frequently the plugin refreshes the catalogue automatically.
+
+The supported range is:
+
+```text
+1–168 hours
+```
+
+The default is:
+
+```text
+6 hours
+```
+
+### Request Timeout
+
+Controls catalogue HTTP request timeout.
+
+Default:
+
+```text
+30 seconds
+```
+
+### Library Refresh Delay
+
+Controls the delay associated with refreshing Jellyfin after a download has started.
+
+Default:
+
+```text
+10 seconds
+```
+
+---
+
+## Playback Startup Buffer
+
+### Maximum Startup Wait
+
+Maximum amount of time to wait for enough of a file to become available before playback starts.
+
+Default:
+
+```text
+120 seconds
+```
+
+### Startup Buffer Percentage
+
+Percentage of the expected file size to target before starting playback.
+
+Default:
+
+```text
+5%
+```
+
+### Minimum Startup Buffer
+
+Minimum amount of data to buffer before playback.
+
+Default:
+
+```text
+0.5 GB
+```
+
+### Maximum Startup Buffer
+
+Maximum amount of data to buffer before playback.
+
+Default:
+
+```text
+3 GB
+```
+
+These values can be adjusted depending on download speed, file sizes and the playback devices being used.
+
+---
+
+# Installation
+
+There are two intended installation methods:
+
+1. Jellyfin Plugin Repository / Manifest
+2. Manual DLL installation
+
+## Method 1 — Plugin Repository
+
+Once the plugin manifest has been published:
+
+1. Open Jellyfin.
+2. Go to **Dashboard → Plugins**.
+3. Open **Manage Repositories**.
+4. Add the Media Vault repository.
+5. Enter the manifest URL shown at the top of this README.
+6. Save the repository.
+7. Find **Media Vault** in the plugin catalogue.
+8. Install it.
+9. Restart Jellyfin if requested.
+
+The repository manifest allows Jellyfin to discover plugin releases and their associated binaries.
+
+---
+
+# Method 2 — Manual DLL Installation
+
+Manual installation is useful for development builds or when installing a release before the repository manifest is available.
+
+## 1. Stop Jellyfin
+
+Stop the Jellyfin server before replacing or installing the plugin.
+
+---
+
+## 2. Locate the Jellyfin Data Directory
+
+The plugin must be placed inside Jellyfin's `plugins` directory.
+
+The general structure should be:
+
+```text
+<Jellyfin Data Directory>
+└── plugins
+    └── MediaVault
+        └── MediaVault.Jellyfin.dll
+```
+
+If using a portable Jellyfin installation with a `Data` directory, this may look like:
+
+```text
+Jellyfin
+└── Data
+    └── plugins
+        └── MediaVault
+            └── MediaVault.Jellyfin.dll
+```
+
+On a Windows Jellyfin installation, the exact data directory depends on how Jellyfin was installed. Common data locations include:
+
+```text
+C:\ProgramData\Jellyfin\Server
+```
+
+or:
+
+```text
+C:\Users\<YourUser>\AppData\Local\jellyfin
+```
+
+The important part is that the plugin DLL goes into:
+
+```text
+<Jellyfin Data Directory>\plugins\MediaVault\
+```
+
+Jellyfin's data directory is installation-dependent, so do not assume that the `Data` folder is always beside the Jellyfin executable.
+
+---
+
+## 3. Create a Dedicated Plugin Folder
+
+Do **not** simply place the DLL loose inside the main `plugins` directory if the plugin is being manually installed.
+
+Create:
+
+```text
+plugins
+└── MediaVault
+```
+
+Then place:
+
+```text
+MediaVault.Jellyfin.dll
+```
+
+inside it.
+
+Final structure:
+
+```text
+plugins
+└── MediaVault
+    └── MediaVault.Jellyfin.dll
+```
+
+Do not put the DLL inside another plugin's directory.
+
+---
+
+## 4. Start Jellyfin
+
+Start Jellyfin again.
+
+The plugin should now appear under:
+
+**Dashboard → Plugins → Installed**
+
+Open:
+
+**Media Vault Cloud Catalogue**
+
+and configure the catalogue and GPhotosDL settings.
+
+---
+
+# Building From Source
+
+## Requirements
+
+Install:
+
+- .NET 9 SDK
+- Git
+- A Jellyfin 10.11.11 development/test environment if testing against a live server
+
+The repository contains:
+
+```text
+MediaVault.Jellyfin.sln
+Directory.Packages.props
+build.yaml
+```
+
+---
+
+## Restore
+
+From the repository root:
 
 ```powershell
 dotnet restore
-dotnet test .\MediaVault.Jellyfin.sln
-dotnet publish .\src\MediaVault.Jellyfin\MediaVault.Jellyfin.csproj -c Release -o .\artifacts\plugin
-Compress-Archive -Path .\artifacts\plugin\MediaVault.Jellyfin.dll -DestinationPath .\artifacts\MediaVault.Jellyfin.zip -Force
 ```
 
-`build.yaml` is provided for a repository/catalogue release workflow. For local development, stop Jellyfin, copy the published DLL into its dedicated plugins subdirectory, then start it again. Do not overwrite another plugin's folder.
+---
 
-## Configure and use
+## Run Tests
 
-1. In Media Vault, export Movies with **all** of Titles, Metadata, Media Vault info and TMDb metadata selected.
-2. Copy the export to a path readable by the Jellyfin server, or host it through HTTPS.
-3. Install the DLL and restart Jellyfin.
-4. Open Dashboard → Plugins → Media Vault Cloud Catalogue.
-5. Enter the source path/URL and save.
-6. Click **Refresh catalogue**, then open Channels → Media Vault → Cloud Movies.
+```powershell
+dotnet test .\MediaVault.Jellyfin.sln
+```
 
-The source export must remain outside this package; no original Media Vault file is copied or changed. Put a non-sensitive representative export in `tests/fixtures/` only when you choose to test locally.
+The test project currently covers areas including:
 
-## Current limitations
+- Catalogue mapping
+- Channel item creation
 
-- No Google Photos download or playback.
-- No TV import.
-- Channel navigation and presentation should be tested on every client you use; it is known to vary more than ordinary libraries.
-- Backdrop artwork and a custom in-client “Play from Cloud” action are not implemented.
-- Normal Play is intentionally unavailable until a future deferred media-source/cache implementation exists.
+---
 
-## Existing application assessment
+## Publish the Plugin
 
-The untouched Media Vault application already has a browser-side v3.1 selective JSON export and server-side Google Photos/rclone endpoints. A future read-only `/api/jellyfin/catalogue` endpoint could be cleaner than a static export, but it is intentionally not added here because this delivery may only add files.
+Build the release plugin:
+
+```powershell
+dotnet publish .\src\MediaVault.Jellyfin\MediaVault.Jellyfin.csproj -c Release -o .\artifacts\plugin
+```
+
+The resulting plugin DLL will be placed in:
+
+```text
+artifacts\plugin\MediaVault.Jellyfin.dll
+```
+
+---
+
+## Create a Manual Installation ZIP
+
+The repository's existing packaging process creates a ZIP containing the plugin DLL:
+
+```powershell
+Compress-Archive `
+    -Path .\artifacts\plugin\MediaVault.Jellyfin.dll `
+    -DestinationPath .\artifacts\MediaVault.Jellyfin.zip `
+    -Force
+```
+
+The ZIP can then be attached to a GitHub Release.
+
+---
+
+# Release Packaging
+
+Generated build output should **not** be committed to the source tree.
+
+Release binaries belong in GitHub Releases.
+
+The source repository should contain the source and build configuration, while generated output such as:
+
+```text
+MediaVault.Jellyfin.dll
+MediaVault.Jellyfin.pdb
+MediaVault.Jellyfin.deps.json
+MediaVault.Jellyfin.xml
+```
+
+should be generated during the build/release process.
+
+A release can provide a package such as:
+
+```text
+MediaVault.Jellyfin.zip
+```
+
+containing:
+
+```text
+MediaVault.Jellyfin.dll
+```
+
+The DLL is the file required for the basic manual installation described above.
+
+---
+
+# Catalogue Data Model
+
+The catalogue supports three main content groups.
+
+## Movies
+
+```text
+MediaVaultExport
+└── Movies
+```
+
+## TV Shows
+
+```text
+MediaVaultExport
+└── TV Shows
+    ├── Seasons
+    └── Episodes
+```
+
+## Formula 1
+
+```text
+MediaVaultExport
+└── Formula 1
+    ├── Seasons
+    ├── Rounds
+    └── Events
+```
+
+The plugin converts these source models into internal cloud DTOs before exposing them through Jellyfin.
+
+---
+
+# Catalogue Refresh Behaviour
+
+Catalogue refreshes can occur:
+
+- During plugin startup.
+- Automatically according to the configured refresh interval.
+- Manually from the plugin configuration page.
+
+A manual refresh is available through:
+
+**Dashboard → Plugins → Media Vault Cloud Catalogue → Refresh catalogue now**
+
+The plugin keeps catalogue processing isolated from Jellyfin's normal startup path.
+
+A failed refresh is recorded as an error while retaining the previous valid catalogue.
+
+---
+
+# Data Persistence
+
+The plugin maintains its own cached catalogue in its plugin data directory.
+
+The cache is written atomically using a temporary file before replacement.
+
+This protects the last-known-good catalogue from being destroyed by an interrupted or failed write.
+
+The cache also supports loading older catalogue cache formats where applicable.
+
+Plugin configuration itself is handled through Jellyfin's plugin configuration system.
+
+---
+
+# Security and Network Requirements
+
+The plugin does not require Jellyfin clients to have direct access to the GPhotosDL server.
+
+The expected network relationship is:
+
+```text
+Jellyfin Client
+      │
+      │ Jellyfin connection
+      ▼
+Jellyfin Server
+      │
+      │ GPhotosDL HTTP API
+      ▼
+GPhotosDL
+      │
+      ▼
+Google Photos
+```
+
+The Jellyfin server therefore needs network access to:
+
+- The Media Vault catalogue source.
+- The GPhotosDL server.
+- Google Photos indirectly through GPhotosDL.
+
+The Jellyfin client only needs its normal connection to Jellyfin.
+
+---
+
+# Troubleshooting
+
+## Plugin does not appear after installation
+
+Check:
+
+```text
+<Jellyfin Data Directory>\plugins\MediaVault\MediaVault.Jellyfin.dll
+```
+
+Make sure:
+
+- Jellyfin was restarted after installation.
+- The DLL is not inside another plugin folder.
+- The DLL is readable by the Jellyfin process.
+- The DLL was built for the Jellyfin version being used.
+- The server is running Jellyfin 10.11.11.
+
+---
+
+## Plugin appears but the catalogue is empty
+
+Check the configured catalogue source.
+
+Use the **Test Catalogue Connection** button in the plugin configuration page.
+
+For an HTTP source, verify that the Jellyfin server itself can reach the URL.
+
+For a local source, verify that the path exists **on the Jellyfin server**, not merely on the computer used to administer Jellyfin.
+
+---
+
+## Catalogue refresh fails
+
+Check the Jellyfin logs for the Media Vault plugin.
+
+Common causes include:
+
+- Incorrect catalogue URL.
+- Jellyfin cannot reach the catalogue server.
+- Invalid JSON.
+- Missing `movies` data where required.
+- Invalid or duplicate Media Vault IDs.
+- Request timeout.
+- File permissions.
+- Incorrect local path.
+
+The previous successful catalogue should remain available after a failed refresh.
+
+---
+
+## GPhotosDL connection test fails
+
+Check:
+
+```text
+GPhotosDL URL
+```
+
+and verify that the Jellyfin server can reach the GPhotosDL HTTP API.
+
+The plugin expects GPhotosDL's API to expose:
+
+```text
+POST /download
+GET /download/{id}
+DELETE /download/{id}
+```
+
+Also verify that GPhotosDL itself is running and authenticated.
+
+---
+
+## Download does not start
+
+Check:
+
+1. The catalogue item has a usable Google Photos link.
+2. GPhotosDL is reachable from Jellyfin.
+3. The configured download directory exists or can be created.
+4. Jellyfin has permission to write to the directory.
+5. The item is not already cached.
+6. GPhotosDL accepts the supplied Google Photos URL.
+
+---
+
+## Playback starts but stops while downloading
+
+Increase the playback startup buffer settings.
+
+Consider increasing:
+
+- **Maximum Startup Wait**
+- **Startup Buffer Percentage**
+- **Minimum Startup Buffer**
+
+The correct values depend on the download speed and size of the media being played.
+
+The purpose of the buffer is to prevent Jellyfin/FFmpeg from reaching the end of a growing file immediately after playback starts.
+
+---
+
+## Sort order is incorrect
+
+The plugin includes a background sort-title synchronisation service.
+
+Check that:
+
+- The catalogue contains the expected `sortTitle`.
+- The item belongs to the Media Vault Channel.
+- The Media Vault provider ID is present.
+- Jellyfin has completed Channel item creation/update.
+
+The synchronisation service intentionally targets existing Channel Movie items rather than performing a full library scan.
+
+---
+
+# Development Notes
+
+The plugin is intentionally split into separate responsibilities.
+
+```text
+CatalogueStore
+    │
+    ├── Reads and validates catalogue
+    ├── Maps source models
+    └── Maintains cache
+          │
+          ▼
+Channels
+    │
+    ├── Movies
+    ├── TV Shows
+    └── Formula 1
+          │
+          ▼
+DownloadController
+    │
+    ├── Start
+    ├── Status
+    ├── Cancel
+    └── Cached-file detection
+          │
+          ▼
+GPhotosDlService
+          │
+          ▼
+      GPhotosDL
+```
+
+This keeps the plugin's Jellyfin integration separate from Google Photos authentication/download functionality.
+
+---
+
+# Design Principles
+
+## Use Jellyfin's public architecture
+
+The plugin uses Jellyfin's Channel APIs rather than directly manipulating the Jellyfin database.
+
+## Do not fake local media
+
+Cloud catalogue items are not represented as fake local files.
+
+Actual local media only exists once GPhotosDL has downloaded the corresponding content.
+
+## Keep catalogue failures non-destructive
+
+A failed refresh must not destroy the last valid catalogue.
+
+## Keep GPhotosDL separate
+
+Google Photos authentication and downloading belong to GPhotosDL.
+
+The Jellyfin plugin only needs to communicate with its HTTP API.
+
+## Use deterministic identities
+
+Media Vault IDs are converted into deterministic UUID-style identifiers so that the same catalogue record can be consistently identified across refreshes.
+
+---
+
+# Current Limitations
+
+The following are intentionally outside the current plugin's scope:
+
+- The plugin does not implement Google Photos authentication itself.
+- GPhotosDL is required for Google Photos downloads.
+- Download jobs are tracked in memory by the Jellyfin plugin process.
+- Jellyfin client Channel presentation can vary between clients.
+- The plugin depends on Jellyfin 10.11.11 APIs and package versions.
+- The plugin does not directly modify `jellyfin.db`.
+- The plugin does not provide an independent cloud-hosted catalogue service.
+- A Jellyfin plugin repository manifest must be hosted separately before repository-based installation can be enabled.
+
+---
+
+# Future Development
+
+Potential future work includes:
+
+- Continued Jellyfin version compatibility testing.
+- Further client-specific Channel presentation improvements.
+- Additional playback/cache refinements.
+- Expanded repository/manifest automation.
+- Further catalogue/API integration with Media Vault.
+- Additional automated release tooling.
+- Additional integration tests against a real Jellyfin server.
+
+These are intentionally kept separate from the core catalogue/download architecture.
+
+---
+
+# Documentation
+
+Additional technical documentation is available in:
+
+- `docs/CHANNEL_ARCHITECTURE.md`
+- `docs/NATIVE_LIBRARY_SPIKE.md`
+
+These documents explain the reasoning behind the Channel architecture and the investigation into Jellyfin's native library/media model.
+
+---
+
+# License
+
+See the repository license for the applicable licensing terms.
