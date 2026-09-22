@@ -4,10 +4,18 @@ A custom Jellyfin server plugin for **Media Vault**, providing Jellyfin with a c
 
 The plugin is designed around Jellyfin's supported **Channel** architecture. Catalogue metadata is exposed to Jellyfin without pretending cloud content is already a local media file. When playback/download is requested, the plugin coordinates with GPhotosDL to download the real media file locally, allowing Jellyfin to use its normal media pipeline.
 
-> **Jellyfin Plugin Repository / Manifest:**  
-> **`<ADD MANIFEST URL HERE>`**
->
-> Once the repository manifest is hosted, this URL can be added to **Jellyfin → Dashboard → Plugins → Manage Repositories** for repository-based installation and updates.
+## How to Install the Plugin
+
+### Install from Jellyfin Catalogue
+Go to dashboard
+
+Go to Dashboard -> Plugins -> Manage Repositories -> "+ New Repository" <br>
+The repository name can be anything <br>
+For the repository url, use: <br> **`https://raw.githubusercontent.com/Ollie-Beard/Media-Vault-Jellyfin-Plugin/refs/heads/main/manifest.json?token=GHSAT0AAAAAAEGXOFUZYMFKM2ZPVBRUV4CG2VSPCNA`** <br>
+Click Add
+Navigate back to Plugins and click "Available", look for "Media Vault Cloud Catalogue" in the plugin list.
+Install the plugin and restart the jellyfin server.
+
 
 ---
 
