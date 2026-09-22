@@ -11,7 +11,7 @@ Go to dashboard
 
 Go to Dashboard -> Plugins -> Manage Repositories -> "+ New Repository" <br>
 The repository name can be anything <br>
-For the repository url, use: <br> **`https://raw.githubusercontent.com/Ollie-Beard/Media-Vault-Jellyfin-Plugin/refs/heads/main/manifest.json?token=GHSAT0AAAAAAEGXOFUZYMFKM2ZPVBRUV4CG2VSPCNA`** <br>
+For the repository url, use: <br> 
 Click Add
 Navigate back to Plugins and click "Available", look for "Media Vault Cloud Catalogue" in the plugin list.
 Install the plugin and restart the jellyfin server.
