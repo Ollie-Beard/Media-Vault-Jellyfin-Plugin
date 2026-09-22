@@ -642,9 +642,9 @@ A practical workaround is:
    - Movies
    - TV Shows
    - Formula 1
-4. Once Jellyfin has identified the completed/local file, play it from the normal local library.
+4. Once Jellyfin has identified the downloading/local file, play it from the normal local library.
 
-This means the media is still downloaded through the Media Vault/GPhotosDL system, but playback takes place from the local Jellyfin library rather than from the cloud collection populated by the plugin.
+This means the media is still downloading through the Media Vault/GPhotosDL system, but playback takes place from the local Jellyfin library rather than from the cloud collection populated by the plugin.
 
 For example:
 
@@ -665,8 +665,6 @@ Jellyfin identifies file
         ▼
 Local Library Playback
 ```
-
-This is especially useful for clients that cannot reliably stream from an ever-growing file.
 
 ---
 
@@ -1475,7 +1473,6 @@ The following are current limitations or environmental considerations:
 - A corresponding local Jellyfin library is required for each configured download location.
 - The plugin does not directly modify `jellyfin.db`.
 - The plugin does not provide an independent cloud-hosted catalogue service.
-- A Jellyfin plugin repository manifest must be hosted separately before repository-based installation can be enabled.
 
 ---
 
@@ -1483,13 +1480,6 @@ The following are current limitations or environmental considerations:
 
 Potential future work includes:
 
-- Continued Jellyfin version compatibility testing.
-- Further client-specific Channel presentation improvements.
-- Additional playback/cache refinements.
-- Expanded repository/manifest automation.
-- Further catalogue/API integration with Media Vault.
-- Additional automated release tooling.
-- Additional integration tests against a real Jellyfin server.
 - Improved persistent/local cache handling across devices and Jellyfin server restarts.
 - Improved detection and reuse of recently downloaded files across separate Jellyfin clients.
 - Preventing a recently downloaded item from being unnecessarily deleted and downloaded again when the Jellyfin server restarts or the same item is requested from another device.
@@ -1503,6 +1493,8 @@ If an item has been downloaded on one device, pressing Play again on that same r
 However, after a Jellyfin server restart, or when the same item is requested from a different device/server instance, the recently downloaded file may not be retained/reused as intended. In those situations, the existing file can be deleted and another Google Photos download can be started.
 
 This is not ideal because the media has already been downloaded and should not need to be downloaded again.
+
+To get around this limitation, initiate playback of a file from the local library, not the cloud collection.
 
 Improving this behaviour so that downloaded media is persistently recognised and reused across server restarts and different clients/devices is a planned area of future development.
 
@@ -1518,7 +1510,3 @@ Additional technical documentation is available in:
 These documents explain the reasoning behind the Channel architecture and the investigation into Jellyfin's native library/media model.
 
 ---
-
-# License
-
-See the repository license for the applicable licensing terms.
