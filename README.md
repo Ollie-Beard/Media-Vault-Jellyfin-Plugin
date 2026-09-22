@@ -4,7 +4,7 @@ A custom Jellyfin server plugin for **Media Vault**, providing Jellyfin with a c
 
 The plugin is designed around Jellyfin's supported **Channel** architecture. Catalogue metadata is exposed to Jellyfin without pretending cloud content is already a local media file. When playback/download is requested, the plugin coordinates with GPhotosDL to download the real media file locally, allowing Jellyfin to use its normal media pipeline.
 
-> **Jellyfin Plugin Repository / Manifest:**
+> **Jellyfin Plugin Repository / Manifest:**  
 > **`<ADD MANIFEST URL HERE>`**
 >
 > Once the repository manifest is hosted, this URL can be added to **Jellyfin → Dashboard → Plugins → Manage Repositories** for repository-based installation and updates.
@@ -100,7 +100,7 @@ The plugin does **not** perform Google authentication or directly download Googl
 - GPhotosDL integration for on-demand downloads.
 - Download progress, speed and ETA information.
 - Download cancellation.
-- Detection of already-cached local files.
+- Local-file detection for already downloaded media.
 - Cached runtime estimation for partially downloaded media.
 - Configurable playback startup buffering.
 - Automatic Jellyfin sort-title synchronisation.
@@ -357,7 +357,7 @@ These endpoints provide functionality including:
 
 - Starting a download.
 - Viewing active downloads.
-- Viewing cached files.
+- Viewing locally cached files.
 - Checking progress.
 - Checking download speed.
 - Checking ETA.
@@ -404,6 +404,125 @@ The actual configured root directories are controlled through the plugin configu
 
 ---
 
+# Local Jellyfin Libraries Are Required
+
+The Media Vault Channel and the local Jellyfin library serve two different purposes.
+
+The **cloud collection** provides the catalogue entry and initiates the download.
+
+The **local Jellyfin library** provides the location where the real downloaded media file is discovered and played.
+
+Therefore, every cloud collection must have a corresponding local Jellyfin library configured.
+
+For example:
+
+```text
+Media Vault → Movies
+        │
+        ▼
+Movies download directory
+        │
+        ▼
+Local Jellyfin Movies library
+```
+
+The same principle applies to TV Shows and Formula 1.
+
+For example:
+
+```text
+Media Vault → TV Shows
+        │
+        ▼
+TV Shows download directory
+        │
+        ▼
+Local Jellyfin TV Shows library
+```
+
+and:
+
+```text
+Media Vault → Formula 1
+        │
+        ▼
+F1 download directory
+        │
+        ▼
+Local Jellyfin F1 library
+```
+
+The Jellyfin local library must be configured to **probe the same location used as the corresponding download directory in the Media Vault plugin settings**.
+
+If, for example, the plugin is configured to download Movies into:
+
+```text
+D:\MediaVault\Movies
+```
+
+then the Jellyfin Movies library needs to include:
+
+```text
+D:\MediaVault\Movies
+```
+
+as one of its library paths.
+
+Without this local library:
+
+1. GPhotosDL can successfully download the file.
+2. The file can exist on disk.
+3. Jellyfin can still be unable to identify the file as a Movie, Episode or Formula 1 event.
+4. Playback through the normal local Jellyfin media pipeline cannot begin.
+
+**A corresponding local Jellyfin library is therefore a required part of the system.**
+
+---
+
+# GPhotosDL Filename Handling
+
+When GPhotosDL downloads media, Google Chrome initially creates a temporary download file with a name similar to:
+
+```text
+xxxxxxxx.crdownload
+```
+
+A `.crdownload` file is a browser download temporary file and does not contain the final media filename that Jellyfin expects.
+
+GPhotosDL therefore intercepts the download and changes the filename to the intended media filename, for example:
+
+```text
+Back To The Future.mkv
+```
+
+rather than leaving it as:
+
+```text
+xxxxxxxx.crdownload
+```
+
+This is important because Jellyfin's local library needs to be able to identify the growing file as the actual piece of media being downloaded.
+
+For example:
+
+```text
+xxxxxxxx.crdownload
+```
+
+does not provide Jellyfin with enough filename information to identify the file as **Back To The Future**.
+
+Whereas:
+
+```text
+Back To The Future.mkv
+```
+
+allows Jellyfin's normal library scanning and media identification process to recognise the file correctly while it continues to grow.
+
+This filename handling is performed by **GPhotosDL**, not by the Jellyfin plugin.
+
+---
+
 # Playback Startup Buffer
 
 Google Photos downloads can take time to complete.
@@ -426,10 +545,13 @@ Playback requested
 Start Google Photos download
        │
        ▼
+GPhotosDL downloads and names the file
+       │
+       ▼
 Wait for sufficient local data
        │
        ▼
-Expose/use real local MKV
+Jellyfin discovers the real MKV
        │
        ▼
 Jellyfin native playback
@@ -441,19 +563,110 @@ The plugin does not manufacture a fake `MediaSourceInfo` or fake media file to a
 
 ---
 
-# Cached Files
+# Targeted Library Refresh
 
-If the requested media already exists locally, the plugin does not start another Google Photos download.
+The system originally used a Jellyfin-wide library rescan after a download was started.
 
-Instead it identifies the existing file as cached.
+While this worked, it introduced unnecessary delay because Jellyfin had to inspect the entire configured library.
 
-Cached media can therefore remain usable even after:
+This could be particularly noticeable on:
 
-- Jellyfin has restarted.
-- The GPhotosDL job is no longer present in the plugin's in-memory job list.
-- The original download process has completed.
+- Older hardware.
+- Systems using mechanical HDDs.
+- Servers with very large existing libraries.
+- Systems where the Jellyfin library contains thousands of other files.
 
-The download API checks the configured local storage locations when determining whether media is already cached.
+The current system avoids this full-library scan.
+
+Instead, once a download is initiated, Jellyfin is instructed to look specifically for the expected downloaded filename.
+
+For example:
+
+```text
+Back To The Future.mkv
+```
+
+rather than asking Jellyfin to rescan the entire Movies library.
+
+Conceptually:
+
+```text
+Old behaviour:
+
+Download starts
+      │
+      ▼
+Full Jellyfin library scan
+      │
+      ▼
+Eventually discovers file
+      │
+      ▼
+Playback
+
+
+Current behaviour:
+
+Download starts
+      │
+      ▼
+Look specifically for:
+"Back To The Future.mkv"
+      │
+      ▼
+Jellyfin identifies the file
+      │
+      ▼
+Playback
+```
+
+This significantly reduces the amount of unnecessary filesystem work required before playback can begin and is particularly useful on slower hardware or large HDD-based libraries.
+
+---
+
+# Device Compatibility and Growing Files
+
+Playing a file while it is still being downloaded relies on the Jellyfin client and its playback pipeline correctly handling an **ever-growing media file**.
+
+Not every Jellyfin client/device behaves the same way.
+
+For example, some devices such as **Android TV** may not reliably handle playback of a file that is still growing while it is being downloaded.
+
+In these cases, the download itself can still be performed successfully.
+
+A practical workaround is:
+
+1. Initiate the download from the TV or another device.
+2. Allow GPhotosDL to download the media into the configured local library directory.
+3. Trigger a scan of the **specific corresponding local library**:
+   - Movies
+   - TV Shows
+   - Formula 1
+4. Once Jellyfin has identified the completed/local file, play it from the normal local library.
+
+This means the media is still downloaded through the Media Vault/GPhotosDL system, but playback takes place from the local Jellyfin library rather than from the cloud collection populated by the plugin.
+
+For example:
+
+```text
+Media Vault Cloud Collection
+        │
+        │ Download
+        ▼
+GPhotosDL
+        │
+        ▼
+Local Movies Library
+        │
+        │ Specific library scan
+        ▼
+Jellyfin identifies file
+        │
+        ▼
+Local Library Playback
+```
+
+This is especially useful for clients that cannot reliably stream from an ever-growing file.
 
 ---
 
@@ -563,6 +776,28 @@ Separate directories can be configured for:
 - Formula 1
 
 These directories must be writable by the Jellyfin server process.
+
+**Each directory must also correspond to the appropriate Jellyfin local library.**
+
+For example:
+
+```text
+Plugin Movies Directory
+        ↓
+Jellyfin Movies Library Path
+```
+
+```text
+Plugin TV Shows Directory
+        ↓
+Jellyfin TV Shows Library Path
+```
+
+```text
+Plugin F1 Directory
+        ↓
+Jellyfin F1 Library Path
+```
 
 ---
 
@@ -710,31 +945,33 @@ Jellyfin
             └── MediaVault.Jellyfin.dll
 ```
 
-On a Windows Jellyfin installation, the exact data directory depends on how Jellyfin was installed. Common data locations include:
+On a Windows Jellyfin installation, the exact data directory depends on how Jellyfin was installed. Common locations include:
 
 ```text
-C:\ProgramData\Jellyfin\Server
+C:\ProgramData\Jellyfin\Server\plugins
 ```
 
 or:
 
 ```text
-C:\Users\<YourUser>\AppData\Local\jellyfin
+C:\Users\<YourUser>\AppData\Local\jellyfin\plugins
 ```
 
-The important part is that the plugin DLL goes into:
+Jellyfin's current documentation lists `%ProgramData%\Jellyfin\Server\plugins` for tray installations and `%UserProfile%\AppData\Local\jellyfin\plugins` for direct installations.
+
+The important part is that the plugin DLL goes into the server's:
 
 ```text
-<Jellyfin Data Directory>\plugins\MediaVault\
+plugins\MediaVault\
 ```
 
-Jellyfin's data directory is installation-dependent, so do not assume that the `Data` folder is always beside the Jellyfin executable.
+directory.
 
 ---
 
 ## 3. Create a Dedicated Plugin Folder
 
-Do **not** simply place the DLL loose inside the main `plugins` directory if the plugin is being manually installed.
+Do **not** simply place the DLL loose inside the main `plugins` directory.
 
 Create:
 
@@ -870,7 +1107,7 @@ MediaVault.Jellyfin.xml
 
 should be generated during the build/release process.
 
-A release can provide a package such as:
+A release should provide a package such as:
 
 ```text
 MediaVault.Jellyfin.zip
@@ -882,7 +1119,7 @@ containing:
 MediaVault.Jellyfin.dll
 ```
 
-The DLL is the file required for the basic manual installation described above.
+The ZIP is the preferred release asset for repository-based installation, while the DLL inside it is the file required for the basic manual installation described above.
 
 ---
 
@@ -1064,24 +1301,78 @@ Check:
 2. GPhotosDL is reachable from Jellyfin.
 3. The configured download directory exists or can be created.
 4. Jellyfin has permission to write to the directory.
-5. The item is not already cached.
-6. GPhotosDL accepts the supplied Google Photos URL.
+5. The corresponding local Jellyfin library exists and points at the configured download directory.
+6. The item is not already locally available.
+7. GPhotosDL accepts the supplied Google Photos URL.
 
 ---
 
-## Playback starts but stops while downloading
+## Jellyfin cannot find the downloaded file
 
-Increase the playback startup buffer settings.
+First check that GPhotosDL has renamed the temporary browser download from:
 
-Consider increasing:
+```text
+xxxxxxxx.crdownload
+```
 
-- **Maximum Startup Wait**
-- **Startup Buffer Percentage**
-- **Minimum Startup Buffer**
+to the intended filename, for example:
 
-The correct values depend on the download speed and size of the media being played.
+```text
+Back To The Future.mkv
+```
 
-The purpose of the buffer is to prevent Jellyfin/FFmpeg from reaching the end of a growing file immediately after playback starts.
+Then verify that the corresponding local Jellyfin library is configured to include the same directory used by the Media Vault plugin.
+
+For example:
+
+```text
+Media Vault Movies Download Directory
+        │
+        ▼
+D:\MediaVault\Movies
+        │
+        ▼
+Jellyfin Movies Library
+        │
+        ▼
+D:\MediaVault\Movies
+```
+
+If the Jellyfin library does not include the download directory, Jellyfin will not be able to identify the downloaded file.
+
+---
+
+## Playback does not work while downloading
+
+Some clients may not reliably support playback from an ever-growing media file.
+
+Android TV is one example where this behaviour may occur.
+
+In this situation:
+
+1. Start the download.
+2. Allow the file to download to the appropriate local library directory.
+3. Trigger a scan of the relevant local library only.
+4. Play the resulting item from the local Jellyfin library.
+
+This avoids relying on the cloud Channel's playback path for clients that do not handle growing files reliably.
+
+---
+
+## Playback takes too long to start
+
+The system previously used a full Jellyfin-wide library scan after initiating a download.
+
+The current system instead targets the expected downloaded filename specifically.
+
+If playback is still slow, check:
+
+- HDD performance.
+- Jellyfin library size.
+- Download speed.
+- Startup buffer settings.
+- Whether the local library is correctly configured.
+- Whether the client supports growing-file playback.
 
 ---
 
@@ -1124,7 +1415,7 @@ DownloadController
     ├── Start
     ├── Status
     ├── Cancel
-    └── Cached-file detection
+    └── Local-file detection
           │
           ▼
 GPhotosDlService
@@ -1147,7 +1438,7 @@ The plugin uses Jellyfin's Channel APIs rather than directly manipulating the Je
 
 Cloud catalogue items are not represented as fake local files.
 
-Actual local media only exists once GPhotosDL has downloaded the corresponding content.
+Actual local media exists as a real MKV file downloaded by GPhotosDL.
 
 ## Keep catalogue failures non-destructive
 
@@ -1163,17 +1454,25 @@ The Jellyfin plugin only needs to communicate with its HTTP API.
 
 Media Vault IDs are converted into deterministic UUID-style identifiers so that the same catalogue record can be consistently identified across refreshes.
 
+## Keep local library discovery targeted
+
+The system avoids unnecessary full-library rescans where possible by targeting the expected downloaded filename.
+
+This reduces filesystem work and improves startup time on slower hardware and large libraries.
+
 ---
 
 # Current Limitations
 
-The following are intentionally outside the current plugin's scope:
+The following are current limitations or environmental considerations:
 
 - The plugin does not implement Google Photos authentication itself.
 - GPhotosDL is required for Google Photos downloads.
 - Download jobs are tracked in memory by the Jellyfin plugin process.
 - Jellyfin client Channel presentation can vary between clients.
+- Some Jellyfin clients/devices may not reliably play an ever-growing media file.
 - The plugin depends on Jellyfin 10.11.11 APIs and package versions.
+- A corresponding local Jellyfin library is required for each configured download location.
 - The plugin does not directly modify `jellyfin.db`.
 - The plugin does not provide an independent cloud-hosted catalogue service.
 - A Jellyfin plugin repository manifest must be hosted separately before repository-based installation can be enabled.
@@ -1191,8 +1490,21 @@ Potential future work includes:
 - Further catalogue/API integration with Media Vault.
 - Additional automated release tooling.
 - Additional integration tests against a real Jellyfin server.
+- Improved persistent/local cache handling across devices and Jellyfin server restarts.
+- Improved detection and reuse of recently downloaded files across separate Jellyfin clients.
+- Preventing a recently downloaded item from being unnecessarily deleted and downloaded again when the Jellyfin server restarts or the same item is requested from another device.
 
-These are intentionally kept separate from the core catalogue/download architecture.
+### Download/cache persistence
+
+There is currently an important limitation around recently downloaded files.
+
+If an item has been downloaded on one device, pressing Play again on that same running Jellyfin server can make use of the local downloaded file rather than immediately starting another download.
+
+However, after a Jellyfin server restart, or when the same item is requested from a different device/server instance, the recently downloaded file may not be retained/reused as intended. In those situations, the existing file can be deleted and another Google Photos download can be started.
+
+This is not ideal because the media has already been downloaded and should not need to be downloaded again.
+
+Improving this behaviour so that downloaded media is persistently recognised and reused across server restarts and different clients/devices is a planned area of future development.
 
 ---
 
