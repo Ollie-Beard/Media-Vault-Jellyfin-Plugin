@@ -257,7 +257,7 @@ Add `https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11/mani
 
 Both are required for the Media Vault JavaScript interface.
 
-[For more guidance and information about installing these two supporting plugins and setting up the JavaScript Injection Component Click Here](#javascript-injection-component)
+[Click here For more guidance and information about installing these two supporting plugins and setting up the JavaScript Injection Component.](#javascript-injection-component)
 
 #### 5. Start Jellyfin
 
