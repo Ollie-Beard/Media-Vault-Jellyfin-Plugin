@@ -48,7 +48,7 @@
                 <div class="inputContainer">
                     <label class="inputLabel" for="source">Catalogue JSON URL or server-local path</label>
                     <input id="source" is="emby-input" required>
-                    <div class="mv-help">Example: http://192.168.1.49:3001/api/jellyfin/catalogue</div>
+                    <div class="mv-help">Example: http://192.168.1.1:3001/api/jellyfin/catalogue</div>
                     <div class="mv-test-row">
                         <button id="testCatalogue" is="emby-button" type="button" class="raised emby-button">
                             <span>Test Catalogue Connection</span>
@@ -63,8 +63,8 @@
 
                     <div class="inputContainer">
                         <label class="inputLabel" for="gphotosDlUrl">GPhotosDL server URL</label>
-                        <input id="gphotosDlUrl" is="emby-input" placeholder="http://192.168.1.49:8282">
-                        <div class="mv-help">Do not include an API path; the plugin will use the GPhotosDL server root.</div>
+                        <input id="gphotosDlUrl" is="emby-input" placeholder="http://localhost:8282">
+                        <div class="mv-help">This is the link to the GPhotosDL server URL. You need that application running for the connection to work.</div>
                         <div class="mv-test-row">
                             <button id="testGPhotosDl" is="emby-button" type="button" class="raised emby-button">
                                 <span>Test GPhotosDL Connection</span>
@@ -77,6 +77,7 @@
                 <div class="mv-section">
                     <h2>Download Directories</h2>
                     <p>These are the final paths on the Jellyfin server where GPhotosDL will place downloaded media.</p>
+                    <p>These directories need to be the same as your local libraries' drectories in order for Jellyfin to know where to save the media to.</p>
 
                     <div class="inputContainer">
                         <label class="inputLabel" for="moviesDirectory">Movies download directory</label>
@@ -137,7 +138,7 @@
                         <div class="inputContainer">
                             <label class="inputLabel" for="playbackBufferMax">Maximum startup buffer (GB)</label>
                             <input id="playbackBufferMax" is="emby-input" type="number" min="0.5" max="20" step="0.5">
-                            <div class="mv-help">The default 0.5â€“3 GB range is deliberately chosen to match the observed behaviour where playback becomes reliable after a few GB have downloaded.</div>
+                            <div class="mv-help">The default 0.5GB range is deliberately chosen to match the observed behaviour where playback becomes reliable after a few GB have downloaded.</div>
                         </div>
                     </div>
                 </div>
