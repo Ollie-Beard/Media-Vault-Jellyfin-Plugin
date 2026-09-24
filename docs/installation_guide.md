@@ -120,7 +120,7 @@ If you do not wish to use the Run command, you must enable hidden files in Windo
 ### Step 6: Configure the Media Vault Plugin Settings
 1. Go to the Jellyfin Dashboard and open the settings page for **Media Vault Cloud Catalogue**.
 2. You will see a header that reads:
-   > *"Media Vault Cloud Catalogue - Cloud-backed Media Vault films are browsed here without being represented as fake local media files."*
+   > *"Media Vault Cloud Catalogue<br>Cloud-backed Media Vault films are browsed here without being represented as fake local media files."*
 3. Fill out the configuration fields:
    * **Catalogue JSON URL or server-local path:** Enter the link/path to the JSON file that populates your Cloud Collections (Movies, TV Shows, and F1 content).
    * **GPhotosDL server URL:** Enter the HTTP API link created when you run `.\gphotosdl.exe -show -debug` (required for Google Photos downloads).
