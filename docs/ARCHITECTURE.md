@@ -265,3 +265,5 @@ Some clients (e.g., older Android TV builds, standalone web OS apps) freeze or f
 ### 🔮 Future Development Plan
 * **Persistent Download State Tracking:** Enhance cache retention across server restarts so previously downloaded files are persistently recognized across all client devices without requiring manual local library scans.
 * **Multi-Node Download Cache Sharing:** Allow multiple Jellyfin instances to share a single centralized GPhotosDL cache repository.
+
+Return to README
