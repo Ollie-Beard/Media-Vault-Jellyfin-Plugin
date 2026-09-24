@@ -178,3 +178,5 @@ If you notice strange text or corrupted characters appearing in your web browser
 ---
 
 🎉 **Everything is now installed!** You can rename, reorder, and customize your Cloud Collections however you prefer inside Jellyfin.
+
+Return to README
