@@ -1,6 +1,6 @@
 # Installation Guide
 
-Welcome! This guide will walk you through setting up the **Media Vault Jellyfin Plugin** step by step in plain, simple terms.
+This guide will walk you through setting up the **Media Vault Jellyfin Plugin** step by step in plain, simple terms.
 
 ---
 
