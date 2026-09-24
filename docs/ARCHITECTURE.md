@@ -75,6 +75,7 @@ The plugin bridges Jellyfin with an external Media Vault catalogue and the **GPh
 ## 📚 Catalogue & Data Persistence (`CatalogueStore`)
 
 The plugin acts as a consumer of the Media Vault catalogue. It loads, validates, and transforms catalogue entries into internal DTOs.
+A DTO (Data Transfer Object) is a lightweight, structured data model used specifically to transport catalogue data cleanly between the Media Vault JSON source, the plugin's internal memory, and Jellyfin's Channel interfaces without executing any business logic.
 
 ### Catalogue Source Options
 The catalogue JSON source can be supplied via:
