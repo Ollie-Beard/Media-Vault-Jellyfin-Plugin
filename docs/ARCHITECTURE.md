@@ -107,7 +107,8 @@ A DTO (Data Transfer Object) is a lightweight, structured data model used specif
 
 The catalogue JSON source can be supplied via:
 
-* **Remote HTTP/HTTPS Endpoint:** `http://192.168.1.1:8080/api/jellyfin/catalogue`
+* **Remote Cloudflare HTTPS Endpoint:** `https://media-vault-cloud-catalogue.parkerjack931.workers.dev/` <- use this
+* **Local HTTP Endpoint:** `http://192.168.1.1:8080/api/jellyfin/catalogue`
 * **Local Filesystem Path:** `/etc/mediavault/catalogue.json`
 
 ### Last-Known-Good Fallback Logic
@@ -247,7 +248,9 @@ This allows Jellyfin to recognise the file as the intended media file while GPho
 
 The web UI estimates playable media runtime during active downloads:
 
-\(\text{Cached Runtime} = \text{Full Runtime} \times \frac{\text{Downloaded Bytes}}{\text{Total Bytes}}\)
+```text
+{Cached Runtime} = \text{Full Runtime} \times \frac{\text{Downloaded Bytes}}{\text{Total Bytes}}
+```
 
 This provides an estimate of how much of the expected runtime has been downloaded and cached locally.
 
