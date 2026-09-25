@@ -30,7 +30,7 @@ Head to the **Releases** section of this GitHub repository and locate the **Asse
 To keep things as smooth as possible, the primary path below covers the easiest, recommended installation methods. Alternative or manual methods (such as manually unhiding folders or copy-pasting JS code) are included in expandable drop-down boxes directly under their respective steps.
 
 * **Step 1:** Add the two third-party plugin repositories.
-* **Step 2:** Install File Transformation & JS Injector.
+* **Step 2:** Install File Transformation & Java Script Injector.
 * **Step 3:** Prepare the Media Vault plugin DLL.
 * **Step 4:** Locate the Jellyfin `plugins` folder using a Run command *(or manual method)*.
 * **Step 5:** Create the plugin folder and move the DLL file.
@@ -57,7 +57,7 @@ To keep things as smooth as possible, the primary path below covers the easiest,
 
 ---
 
-### Step 2: Install File Transformation & JS Injector
+### Step 2: Install File Transformation & Java Script Injector
 1. Go back to the **Plugins** page in the Dashboard and click the **Available** tab at the top.
 2. Find **File Transformation** and **JS Injector**.
 3. Click on each plugin individually and press the **Install** button.
@@ -113,12 +113,12 @@ If you do not wish to use the Run command, you must enable hidden files in Windo
    `MediaVault.Jellyfin`
 2. Move the `MediaVault.Jellyfin.dll` file you downloaded in Step 3 into this new `MediaVault.Jellyfin` folder.
 3. Restart the Jellyfin server (via the system tray icon or the **Restart** button in the Jellyfin Dashboard).
-4. Once restarted, go to **Dashboard** > **Plugins** > **Installed**. You should now see all three plugins listed.
+4. Once restarted, go to **Dashboard** > **Plugins** > **Installed**. You should now see all three plugins listed (File Transformation, Java Script Injector & Media Vault Cloud Catalogue).
 
 ---
 
 ### Step 6: Configure the Media Vault Plugin Settings
-1. Go to the Jellyfin Dashboard and open the settings page for **Media Vault Cloud Catalogue**.
+1. Click the Plugin **Media Vault Cloud Catalogue** and open Settings
 2. You will see a header that reads:
    > *"Media Vault Cloud Catalogue<br>Cloud-backed Media Vault films are browsed here without being represented as fake local media files."*
 3. Fill out the configuration fields:
