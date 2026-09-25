@@ -427,7 +427,7 @@ This avoids relying on growing-file playback support in clients that do not hand
 
 ---
 
-## Related Documentation
+# 📚 Related Documentation
 
 * [Installation](INSTALLATION.md)
 * [Configuration](CONFIGURATION.md)
@@ -435,4 +435,4 @@ This avoids relying on growing-file playback support in clients that do not hand
 * [Troubleshooting](TROUBLESHOOTING.md)
 * [Channel Architecture](CHANNEL_ARCHITECTURE.md)
 
-[Return to README](README.md)
+[Return to README](../README.md)
