@@ -1,4 +1,4 @@
-# 🛠️ Media Vault — Troubleshooting Guide
+# 🛠️ Troubleshooting Guide
 
 This document provides a practical guide for diagnosing and fixing common **Media Vault Jellyfin Plugin** issues, including plugin visibility, catalogue failures, GPhotosDL connectivity, downloads, playback, targeted file discovery, and web UI problems.
 
@@ -589,9 +589,9 @@ The underlying Media Vault catalogue and download system can still be working co
 
 ## 📚 Related Documentation
 
-For the rest of the Media Vault project documentation:
+* [Installation](INSTALLATION.md)
+* [Configuration](CONFIGURATION.md)
+* [Development](DEVELOPMENT.md)
+* [Architecture](ARCHITECTURE.md)
 
-- `INSTALLATION.md` — Complete installation and initial setup.
-- `CONFIGURATION.md` — Plugin configuration and server settings.
-- `ARCHITECTURE.md` — Plugin architecture and playback design.
-- `DEVELOPMENT.md` — Building, testing, publishing, and development workflow.
+[Return to README](../README.md)
