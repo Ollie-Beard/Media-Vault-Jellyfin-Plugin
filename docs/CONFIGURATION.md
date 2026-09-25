@@ -65,7 +65,7 @@ Plugin F1 Directory       ──► Jellyfin F1 Library Path
 
 ## ⏱️ Catalogue Refresh Settings
 
-Controls how and when the catalogue data is synchronized from the remote source.
+Controls how and when the catalogue data is synchronised from the remote source.
 
 | Setting | Description | Range / Default |
 | :--- | :--- | :--- |
@@ -153,7 +153,7 @@ Download Starts ──► Targeted File Query ("Back To The Future.mkv") ──�
 
 ## 🔄 Sort Title Synchronisation Service
 
-Jellyfin Channel items can occasionally lose custom sort titles when metadata is updated or re-indexed. To maintain consistent ordering across Cloud Collections, the plugin runs a background background service called `MediaVaultSortTitleHostedService`.
+Jellyfin Channel items can occasionally lose custom sort titles when metadata is updated or re-indexed. To maintain consistent ordering across Cloud Collections, the plugin runs a background service called `MediaVaultSortTitleHostedService`.
 
 ### How the Sync Service Operates
 
@@ -165,7 +165,7 @@ Jellyfin Channel items can occasionally lose custom sort titles when metadata is
  5. Apply Catalogue 'sortTitle' if mismatched
 ```
 
-* **Direct API Alignment:** The service synchronizes metadata directly via standard Jellyfin API abstractions rather than executing raw queries against `jellyfin.db`.
+* **Direct API Alignment:** The service synchronises metadata directly via standard Jellyfin API abstractions rather than executing raw queries against `jellyfin.db`.
 * **Event Listening:** Listens to Jellyfin item creation and modification events so newly added items are reconciled in real time.
 
 ---
