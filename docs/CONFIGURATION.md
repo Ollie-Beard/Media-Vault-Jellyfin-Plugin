@@ -126,11 +126,11 @@ When a user requests playback of a cloud item, the plugin requests GPhotosDL to 
 
 ---
 
-## 🎯 Targeted Library Refresh Mechanics
+## 🎯 Targeted Library Discovery Mechanics
 
 Historically, initiating a media stream triggered a global, server-wide Jellyfin library scan to detect the newly downloading file. On systems with large libraries or spinning HDDs, this created significant performance bottlenecks.
 
-The Media Vault plugin uses **Targeted Library Refresh** to eliminate full-library scans.
+The Media Vault plugin uses **Targeted Library Discovery** to eliminate full-library scans.
 
 ### Comparison Overview
 
@@ -144,7 +144,7 @@ Download Starts ──► Full Jellyfin Library Scan ──► File Discovered (
 Download Starts ──► Targeted File Query ("Back To The Future.mkv") ──► File Identified ──► Playback Begins
 ```
 
-### Benefits of Targeted Refreshes
+### Benefits of Targeted Item Discoveries
 * **Reduced Disk I/O:** Prevents unnecessary disk reads across thousands of unrelated media files.
 * **Faster Startup:** Drastically reduces total waiting time between clicking "Play" and video rendering.
 * **Lower CPU Usage:** Eliminates metadata scraping overhead on low-power devices (Raspberry Pi, NAS devices, older servers).
