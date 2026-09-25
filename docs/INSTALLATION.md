@@ -1,4 +1,4 @@
-<img width="5120" height="1440" alt="image" src="https://github.com/user-attachments/assets/6dc383da-36b7-4ae2-91fd-9b38822c8029" /># Installation Guide
+# Installation Guide
 
 This guide will walk you through setting up the **Media Vault Jellyfin Plugin** step by step in plain, simple terms.
 
