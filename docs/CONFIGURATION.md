@@ -197,7 +197,7 @@ Clients streaming from Jellyfin do not need access or credentials for the GPhoto
 │     Google Photos     │
 └───────────────────────┘
 ```
-# 📚 Related Documentation
+## 📚 Related Documentation
 
 * [Installation](INSTALLATION.md)
 * [Development](DEVELOPMENT.md)
