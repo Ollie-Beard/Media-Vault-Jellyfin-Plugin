@@ -1,4 +1,4 @@
-# 🛠️ Troubleshooting Guide
+# Troubleshooting Guide
 
 This document provides a practical guide for diagnosing and fixing common **Media Vault Jellyfin Plugin** issues, including plugin visibility, catalogue failures, GPhotosDL connectivity, downloads, playback, targeted file discovery, and web UI problems.
 
