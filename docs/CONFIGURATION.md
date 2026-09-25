@@ -98,7 +98,7 @@ When a user requests playback of a cloud item, the plugin requests GPhotosDL to 
                                     ▼
                ┌─────────────────────────────────────────┐
                │    Check Buffer Criteria Met?           │
-               │    - Min Buffer reached? (e.g. 0.5GB)    │
+               │    - Min Buffer reached? (e.g. 0.5GB)   │
                │    - Target % reached? (e.g. 5%)        │
                └──────────┬───────────────────┬──────────┘
                           │                   │
@@ -185,7 +185,7 @@ Clients streaming from Jellyfin do not need access or credentials for the GPhoto
 │    Jellyfin Server    │ (Media Vault Plugin Installed)
 └───────────┬───────────┘
             │
-            │ Internal HTTP API (Default Port 8282)
+            │ GPhotosDl HTTP API (Default Port 8282)
             ▼
 ┌───────────────────────┐
 │    GPhotosDL Daemon   │ (Headless Browser Downloader)
