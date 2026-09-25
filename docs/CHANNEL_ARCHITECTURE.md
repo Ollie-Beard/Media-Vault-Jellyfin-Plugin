@@ -25,3 +25,14 @@ The identity is deterministic: SHA-1 over the plugin namespace UUID followed by 
 The adapter maps title, overview, genres, release date/year, runtime, age rating, TMDb and Media Vault IDs, cast, director, community rating, collections (tags), state, resolution, medium, and TMDb poster URL. `ChannelItemInfo` has no sort-title or backdrop field, so Jellyfin derives sort order from the title and backdrop support is deliberately deferred. No TMDb request or bulk image download occurs during refresh.
 
 `CatalogueHostedService` loads the last-known-good cache at startup and refreshes independently on the configured interval. Channel calls consume the in-memory cache only. The ChannelManager reconciles its persisted Channel items the next time it refreshes/enumerates that Channel; the importer itself never writes Jellyfin records. Playback is absent; a future `IRequiresMediaInfoCallback` will resolve the stable Media Vault ID, obtain a real cached file, then return `MediaSourceInfo`.
+
+## 📚 Related Documentation
+
+* [Installation](INSTALLATION.md)
+* [Configuration](CONFIGURATION.md)
+* [Development](DEVELOPMENT.md)
+* [Architecture](ARCHITECTURE.md)
+* [Troubleshooting](TROUBLESHOOTING.md)
+* [Channel Architecture](CHANNEL_ARCHITECTURE.md)
+
+[Return to README](../README.md)
