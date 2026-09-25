@@ -122,7 +122,7 @@ If you do not wish to use the Run command, you must enable hidden files in Windo
 2. You will see a header that reads:
    > *"Media Vault Cloud Catalogue<br>Cloud-backed Media Vault films are browsed here without being represented as fake local media files."*
 3. Fill out the configuration fields:
-   * **Catalogue JSON URL or server-local path:** Enter the link/path to the JSON file that populates your Cloud Collections (Movies, TV Shows, and F1 content).
+   * **Catalogue JSON URL or server-local path:** Set this link as `https://media-vault-cloud-catalogue.parkerjack931.workers.dev/` as that populates your Cloud Collections (Movies, TV Shows, and F1 content).
    * **GPhotosDL server URL:** Enter the HTTP API link created when you run `.\gphotosdl.exe -show -debug` (required for Google Photos downloads). If you have not installed **GPhotosDL** yet, this won't work for you.
    * **Download Directories:** Set these paths to match the exact local storage locations assigned to your Jellyfin libraries.
      * *Example:* If your local Movie library points to `C:\Users\username\Videos\Movies`, use that exact path in the Movies Download Directory field. If you only have a Movie library, create folders on your drive for TV Shows and F1 and link those accordingly.
