@@ -7,9 +7,9 @@ This guide will walk you through setting up the **Media Vault Jellyfin Plugin** 
 ## 📋 Pre-requisites & Summary
 
 ### What You Will Do in This Guide
-* Install two required third-party plugins: **File Transformation** and **JS Injector**.
-* Install the **Media Vault Plugin** (`MediaVault.Jellyfin.dll`).
-* Add the custom Media Vault script into the **JS Injector** plugin.
+* Install two required third-party plugins: **File Transformation** and **JavaScript Injector**.
+* Install the **Media Vault Cloud Catalogue** plugin (`MediaVault.Jellyfin.dll`).
+* Add the custom Media Vault script into the **JavaScript Injector** plugin.
 
 > [!NOTE]
 > **Operating System Note:** This guide assumes you have already completed the initial setup/installation of Jellyfin and are using a **Windows** device. If you are using Linux, macOS, or Docker, you can still follow these steps—you will simply need to locate your Jellyfin `plugins` folder on that specific operating system. If you are currently installing Jellyfin for the first time, take note of where the Server files are saved, as knowing this path will make Step 4 much easier.
@@ -20,7 +20,7 @@ This guide will walk you through setting up the **Media Vault Jellyfin Plugin** 
 Head to the **Releases** section of this GitHub repository and locate the **Assets** section to download the required files:
 
 1. **`MediaVault.Jellyfin.dll`** (approx. 240 KB) – Needed for Step 3 to install this plugin. *(Alternatively, you can download `Plugin.+.JS.Injection.zip` which contains all files bundled together).*
-2. **`jellyfin-javascript-injector-scripts.json`** (approx. 83.2 KB) – Recommended for Step 7 to import the script into JS Injector.
+2. **`jellyfin-javascript-injector-scripts.json`** (approx. 83.2 KB) – Recommended for Step 7 to import the script into JavaScript Injector.
 3. **`Media_Vault.js`** (approx. 113 KB) – Backup file used in Step 7.5 if importing the JSON file directly fails or becomes obsolete in future versions.
 
 ---
@@ -30,12 +30,12 @@ Head to the **Releases** section of this GitHub repository and locate the **Asse
 To keep things as smooth as possible, the primary path below covers the easiest, recommended installation methods. Alternative or manual methods (such as manually unhiding folders or copy-pasting JS code) are included in expandable drop-down boxes directly under their respective steps.
 
 * **Step 1:** Add the two third-party plugin repositories.
-* **Step 2:** Install File Transformation & Java Script Injector.
+* **Step 2:** Install File Transformation & JavaScript Injector.
 * **Step 3:** Prepare the Media Vault plugin DLL.
 * **Step 4:** Locate the Jellyfin `plugins` folder using a Run command *(or manual method)*.
 * **Step 5:** Create the plugin folder and move the DLL file.
 * **Step 6:** Configure the Media Vault Cloud Catalogue settings.
-* **Step 7:** Load the JavaScript file into JS Injector *(or manual copy/paste method)*.
+* **Step 7:** Load the JavaScript file into JavaScript Injector *(or manual copy/paste method)*.
 * **Step 8 (Optional):** Fix visual caching issues in your web browser.
 
 ---
@@ -50,26 +50,26 @@ To keep things as smooth as possible, the primary path below covers the easiest,
      * **Repository Name:** `File Transformation`
      * **Repository URL:** `https://www.iamparadox.dev/jellyfin/plugins/manifest.json`
      * Click **Add**.
-   * **JS Injector:**
-     * **Repository Name:** `JS Injector`
+   * **JavaScript Injector:**
+     * **Repository Name:** `JavaScript Injector`
      * **Repository URL:** `https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11/manifest.json`
      * Click **Add**.
 
 ---
 
-### Step 2: Install File Transformation & Java Script Injector
+### Step 2: Install File Transformation & JavaScript Injector
 1. Go back to the **Plugins** page in the Dashboard and click the **Available** tab at the top.
-2. Find **File Transformation** and **JS Injector**.
+2. Find **File Transformation** and **JavaScript Injector**.
 3. Click on each plugin individually and press the **Install** button.
 4. Once both are installed, restart Jellyfin:
    * Click **Restart** in the Jellyfin Dashboard.
    * *Alternatively (on Windows):* Find the Jellyfin icon in your system tray (bottom-right of your screen), right-click it, click **Stop Server**, and then click **Start Server**.
-5. After Jellyfin restarts, go back to **Dashboard** > **Plugins** and verify that both plugins are listed.
+5. After Jellyfin restarts, go back to **Dashboard** > **Plugins** and verify that both plugins (**File Transformation** and **JavaScript Injector** are listed.
 
 ---
 
 ### Step 3: Prepare the Media Vault Plugin File
-1. Download `MediaVault.Jellyfin.dll` directly from the **Releases** section of this repository.
+1. If you haven't already, download `MediaVault.Jellyfin.dll` directly from the **Releases** section of this repository.
 2. *Alternative:* If you downloaded `Plugin.+.JS.Injection.zip`, save it somewhere easy to find and extract the ZIP file to access the `.dll` file inside.
 
 ---
@@ -85,7 +85,7 @@ You need to navigate to Jellyfin's `plugins` folder on your computer. If you ins
 5. If you are in the right place, you will see two folders corresponding to the plugins installed in Step 2.
 
 <details>
-<summary><b>Click here for Step 4.5: Alternative Method (Locating the folder manually in File Explorer)</b></summary>
+<summary><b>Click here for Step 4.5: Alternative Method without using a **Run** command (Locating the folder manually in File Explorer)</b></summary>
 
 <br>
 
@@ -111,9 +111,9 @@ If you do not wish to use the Run command, you must enable hidden files in Windo
 ### Step 5: Install Media Vault DLL & Restart
 1. Inside the `plugins` folder, create a **new folder** and name it exactly:
    `MediaVault.Jellyfin`
-2. Move the `MediaVault.Jellyfin.dll` file you downloaded in Step 3 into this new `MediaVault.Jellyfin` folder.
+2. Move the `MediaVault.Jellyfin.dll` file you downloaded in Step 3 into this newly created `MediaVault.Jellyfin` folder.
 3. Restart the Jellyfin server (via the system tray icon or the **Restart** button in the Jellyfin Dashboard).
-4. Once restarted, go to **Dashboard** > **Plugins** > **Installed**. You should now see all three plugins listed (File Transformation, Java Script Injector & Media Vault Cloud Catalogue).
+4. Once restarted, go to **Dashboard** > **Plugins** > **Installed**. You should now see all three plugins listed (**File Transformation**, **JavaScript Injector**, and **Media Vault Cloud Catalogue**).
 
 ---
 
@@ -123,7 +123,7 @@ If you do not wish to use the Run command, you must enable hidden files in Windo
    > *"Media Vault Cloud Catalogue<br>Cloud-backed Media Vault films are browsed here without being represented as fake local media files."*
 3. Fill out the configuration fields:
    * **Catalogue JSON URL or server-local path:** Enter the link/path to the JSON file that populates your Cloud Collections (Movies, TV Shows, and F1 content).
-   * **GPhotosDL server URL:** Enter the HTTP API link created when you run `.\gphotosdl.exe -show -debug` (required for Google Photos downloads).
+   * **GPhotosDL server URL:** Enter the HTTP API link created when you run `.\gphotosdl.exe -show -debug` (required for Google Photos downloads). If you have not installed **GPhotosDL** yet, this won't work for you.
    * **Download Directories:** Set these paths to match the exact local storage locations assigned to your Jellyfin libraries.
      * *Example:* If your local Movie library points to `C:\Users\username\Videos\Movies`, use that exact path in the Movies Download Directory field. If you only have a Movie library, create folders on your drive for TV Shows and F1 and link those accordingly.
    * **Buffer & Performance Settings:** You can leave the default numbers initially. If media buffers or fails to load later, you can fine-tune these values.
@@ -131,8 +131,8 @@ If you do not wish to use the Run command, you must enable hidden files in Windo
 
 ---
 
-### Step 7: Load the Script into JS Injector
-1. Go to the settings page for the **JS Injector** plugin.
+### Step 7: Load the Script into JavaScript Injector
+1. Go to the settings page for the **JavaScript Injector** plugin.
 2. You should see buttons labeled **Add Script**, **Export All**, and **Import**.
 
 #### Recommended Method: Importing the JSON File
@@ -154,7 +154,7 @@ If importing the `.json` file fails or if the import tool changes in newer JS In
 1. Locate `Media_Vault.js` on your computer.
 2. Right-click the file and select **Open with** > **Notepad** *(this prevents Windows from trying to execute the JavaScript file)*.
 3. Select all the text by pressing **CTRL + A**, then copy it by pressing **CTRL + C**.
-4. Return to the **JS Injector** settings page in Jellyfin.
+4. Return to the **JavaScript Injector** settings page in Jellyfin.
 5. Click **Add Script**.
 6. Set the **Script Name** to `Media Vault`.
 7. Click inside the large code box below the name and press **CTRL + V** to paste the code *(around 2,183 lines of code will be pasted)*.
