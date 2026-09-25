@@ -436,4 +436,4 @@ This avoids relying on growing-file playback support in clients that do not hand
 * [Channel Architecture](CHANNEL_ARCHITECTURE.md)
 * [Native Library Investigation](NATIVE_LIBRARY_SPIKE.md)
 
-[Return to README](README.md)
+[Return to README](main/README.md)
