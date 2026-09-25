@@ -47,8 +47,11 @@
             <form id="form">
                 <div class="inputContainer">
                     <label class="inputLabel" for="source">Catalogue JSON URL or server-local path</label>
-                    <input id="source" is="emby-input" required>
-                    <div class="mv-help">Example: http://192.168.1.1:3001/api/jellyfin/catalogue</div>
+                    <input id="source" is="emby-input" placeholder="https://media-vault-cloud-catalogue.parkerjack931.workers.dev/" required>
+		    <div class="mv-help">
+		        <div>Remote Cloudflare Example (use this): "https://media-vault-cloud-catalogue.parkerjack931.workers.dev/"</div>
+		        <div>Local Example: "http://192.168.1.1:3001/api/jellyfin/catalogue"</div>
+		    </div>
                     <div class="mv-test-row">
                         <button id="testCatalogue" is="emby-button" type="button" class="raised emby-button">
                             <span>Test Catalogue Connection</span>
@@ -357,5 +360,3 @@
 </div>
 </body>
 </html>
-
-
