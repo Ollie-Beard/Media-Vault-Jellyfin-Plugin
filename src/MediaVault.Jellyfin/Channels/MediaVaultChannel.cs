@@ -198,9 +198,9 @@ public class MediaVaultChannel : IChannel, IRequiresMediaInfoCallback
 
     public string Name => _channelKind switch
     {
-        MediaVaultChannelKind.Movies => "Cinedex Movies",
+        MediaVaultChannelKind.Movies => "Cloud Movies",
         MediaVaultChannelKind.TvShows => "Cloud TV Shows",
-        MediaVaultChannelKind.Formula1 => "Formula 1",
+        MediaVaultChannelKind.Formula1 => "Cloud Formula 1",
         _ => "Media Vault"
     };
 
