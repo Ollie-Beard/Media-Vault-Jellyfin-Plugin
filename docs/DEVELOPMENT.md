@@ -200,7 +200,7 @@ Both `Media-Vault-JS-Injection.js` (raw JavaScript) and `jellyfin-javascript-inj
 * **JSON Export:** Allows single-click imports into the JS Injector plugin.
 * **Raw `.js` File:** Provides a readable format for local development, debugging, or manual copy-paste setups.
 
-# 📚 Related Documentation
+## 📚 Related Documentation
 
 * [Installation](INSTALLATION.md)
 * [Configuration](CONFIGURATION.md)
