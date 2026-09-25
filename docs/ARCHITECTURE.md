@@ -68,7 +68,7 @@ The plugin bridges Jellyfin with an external Media Vault catalogue and the **GPh
 3. **Non-Destructive Catalogue Resilience:** Network interruptions or corrupted updates must never destroy or wipe the local active catalogue.
 4. **Decoupled Responsibilities:** Google Photos authentication, cookie handling, and browser automation remain strictly isolated inside GPhotosDL. The Jellyfin plugin only acts as an API client.
 5. **Deterministic Universal Unique Identifiers (UUIDs):** Media Vault IDs map deterministically to fixed UUIDs so that playback history, watch states, and metadata remain stable across catalogue updates.
-6. **Targeted Library Rescans:** Minimizes disk I/O during playback startup by targeting exact filenames rather than triggering global library rescans.
+6. **Targeted Library Item Discovery:** Minimizes disk I/O during playback startup by targeting exact filenames rather than triggering global library rescans.
 
 ---
 
