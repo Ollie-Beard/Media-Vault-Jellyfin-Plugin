@@ -21,7 +21,8 @@ To access the configuration dashboard:
 Controls where the plugin retrieves the Media Vault catalogue data.
 
 * **Catalogue JSON URL or Local Path:** Specifies the HTTP(S) endpoint or server-local file system path containing the catalogue JSON file.
-  * *HTTP Example:* `http://192.168.1.1:3001/api/jellyfin/catalogue`
+  * *Cloudflare Link:* `https://media-vault-cloud-catalogue.parkerjack931.workers.dev/`
+  * *Local HTTP Example:* `http://192.168.1.1:3001/api/jellyfin/catalogue`
   * *Local File Example:* `C:\MediaVault\catalogue.json` or `/etc/mediavault/catalogue.json`
 * **Request Timeout:** The maximum allowed wait time for catalogue HTTP operations.
   * **Default:** `30 seconds`
