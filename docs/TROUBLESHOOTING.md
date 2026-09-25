@@ -593,5 +593,6 @@ The underlying Media Vault catalogue and download system can still be working co
 * [Configuration](CONFIGURATION.md)
 * [Development](DEVELOPMENT.md)
 * [Architecture](ARCHITECTURE.md)
+* [Channel Architecture](CHANNEL_ARCHITECTURE.md)
 
 [Return to README](../README.md)
