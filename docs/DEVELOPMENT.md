@@ -1,4 +1,4 @@
-# 🛠️ Media Vault — Development & Build Guide
+# Development & Build Guide
 
 This document describes how to develop, test, build, package, and maintain the **Media Vault Jellyfin Plugin**.
 
