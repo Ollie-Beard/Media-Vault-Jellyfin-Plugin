@@ -188,5 +188,3 @@ If you notice strange text or corrupted characters appearing in your web browser
 * [Channel Architecture](CHANNEL_ARCHITECTURE.md)
 
 [Return to README](../README.md)
-
-Return to README
