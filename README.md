@@ -57,7 +57,7 @@ The important distinction is that **Media Vault does not replace Jellyfin's play
 <img width="1529" height="801" alt="image" src="https://github.com/user-attachments/assets/ac18c6fe-95a0-40cb-9357-d4a139926ab5" />
 
 **Download in progress:**
-<img width="1466" height="635" alt="image" src="https://github.com/user-attachments/assets/ea54c7c9-6644-4243-bd4c-1d4e33d6e739" />
+<img width="1454" height="628" alt="image" src="https://github.com/user-attachments/assets/8addc830-da6f-486c-9139-cd00c9a09b65" />
 
 **Image: Media Vault download panel showing a completed cached item**
 <img width="1495" height="628" alt="image" src="https://github.com/user-attachments/assets/ac589c13-3681-406e-ae83-0e1b4953374d" />
