@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MediaVault.Jellyfin</name>
+    </assembly>
+    <members>
+        <member name="T:MediaVault.Jellyfin.Channels.ChannelItemFactory">
+            <summary>Maps the validated Media Vault catalogue into Jellyfin's supported channel shape.</summary>
+        </member>
+        <member name="T:MediaVault.Jellyfin.Channels.MediaVaultChannel">
+            <summary>A file-less Cloud Movies catalogue using Jellyfin's supported Channel API.</summary>
+        </member>
+        <member name="T:MediaVault.Jellyfin.ServiceRegistrator">
+            <summary>Registers the cached catalogue refresh loop with Jellyfin's host.</summary>
+        </member>
+        <member name="T:MediaVault.Jellyfin.Services.CatalogueHostedService">
+            <summary>Keeps the external JSON refresh independent of Channel browse requests.</summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Media Vault Downloads</title>
+    <style>
+        .mv-download-page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 16px 40px;
+        }
+
+        .mv-download-page h1 {
+            margin-top: 0;
+        }
+
+        .mv-download-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 18px 0;
+        }
+
+        .mv-download-search {
+            flex: 1 1 420px;
+            min-width: 240px;
+        }
+
+        .mv-download-filter {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .mv-download-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .mv-download-item {
+            border: 1px solid rgba(127, 127, 127, .35);
+            border-radius: 12px;
+            padding: 16px;
+            background: rgba(127, 127, 127, .06);
+        }
+
+        .mv-download-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .mv-download-title {
+            font-size: 1.08em;
+            font-weight: 600;
+        }
+
+        .mv-download-meta,
+        .mv-download-stats,
+        .mv-download-runtime {
+            opacity: .78;
+            font-size: .92em;
+            margin-top: 5px;
+        }
+
+        .mv-download-status {
+            white-space: nowrap;
+            font-size: .85em;
+            opacity: .85;
+        }
+
+        .mv-download-progress-track {
+            height: 10px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: rgba(127, 127, 127, .25);
+            margin-top: 14px;
+        }
+
+        .mv-download-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--theme-primary-color, #52b788);
+            transition: width .35s ease;
+        }
+
+        .mv-download-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .mv-download-empty {
+            opacity: .7;
+            padding: 24px 0;
+        }
+
+        .mv-download-message {
+            margin: 12px 0;
+            opacity: .85;
+        }
+
+        .mv-download-message.error {
+            color: #f44336;
+        }
+
+        .mv-download-message.success {
+            color: #4caf50;
+        }
+
+        .mv-download-hint {
+            opacity: .68;
+            margin: 8px 0 18px;
+            font-size: .92em;
+        }
+
+        .mv-download-count {
+            opacity: .7;
+            font-size: .9em;
+        }
+    </style>
+</head>
+<body>
+<div id="MediaVaultDownloads" data-role="page" class="page type-interior">
+    <div class="mv-download-page">
+        <h1>Media Vault Downloads</h1>
+        <p>
+            Download Media Vault media to the Jellyfin server for later playback without starting playback now.
+            GPhotosDL stays behind the Jellyfin server, so this page does not require direct access to port 8282.
+        </p>
+
+        <div class="mv-download-toolbar">
+            <input
+                id="downloadSearch"
+                class="mv-download-search"
+                is="emby-input"
+                type="search"
+                autocomplete="off"
+                placeholder="Search movies, TV episodes or Formula 1 events...">
+
+            <div class="mv-download-filter">
+                <button id="showActive" is="emby-button" type="button" class="raised emby-button">Active / cached</button>
+                <button id="showCatalogue" is="emby-button" type="button" class="raised emby-button">Search catalogue</button>
+                <button id="refreshDownloads" is="emby-button" type="button" class="raised emby-button">Refresh</button>
+            </div>
+        </div>
+
+        <div class="mv-download-hint" id="searchHint">
+            Showing active downloads and media already cached on the server. Use â€œSearch catalogueâ€ to find something new to download.
+        </div>
+
+        <div id="downloadMessage" class="mv-download-message"></div>
+        <div id="downloadCount" class="mv-download-count"></div>
+        <div id="downloadList" class="mv-download-list"></div>
+    </div>
+
+<script>
+(function () {
+    var root = document.querySelector('#MediaVaultDownloads');
+    var search = document.querySelector('#downloadSearch');
+    var showActive = document.querySelector('#showActive');
+    var showCatalogue = document.querySelector('#showCatalogue');
+    var refresh = document.querySelector('#refreshDownloads');
+    var searchHint = document.querySelector('#searchHint');
+    var message = document.querySelector('#downloadMessage');
+    var count = document.querySelector('#downloadCount');
+    var list = document.querySelector('#downloadList');
+
+    var catalogue = [];
+    var statuses = {};
+    var mode = 'active';
+    var refreshing = false;
+
+    function api(path, options) {
+        return ApiClient.ajax(Object.assign({
+            url: ApiClient.getUrl('MediaVault/Downloads/' + path),
+            type: 'GET',
+            dataType: 'json'
+        }, options || {}));
+    }
+
+    function esc(value) {
+        var d = document.createElement('div');
+        d.textContent = value === null || value === undefined ? '' : String(value);
+        return d.innerHTML;
+    }
+
+    function formatBytes(value) {
+        var n = Number(value);
+        if (!Number.isFinite(n) || n < 0) return '0 B';
+        var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        var i = 0;
+        while (n >= 1024 && i < units.length - 1) {
+            n /= 1024;
+            i++;
+        }
+        return (i === 0 ? n.toFixed(0) : n.toFixed(2)) + ' ' + units[i];
+    }
+
+    function formatEta(seconds) {
+        var n = Number(seconds);
+        if (!Number.isFinite(n) || n < 0) return 'â€”';
+        n = Math.round(n);
+        var h = Math.floor(n / 3600);
+        var m = Math.floor((n % 3600) / 60);
+        var s = n % 60;
+        if (h > 0) return h + 'h ' + String(m).padStart(2, '0') + 'm';
+        if (m > 0) return m + 'm ' + String(s).padStart(2, '0') + 's';
+        return s + 's';
+    }
+
+    function formatRuntime(minutes) {
+        var n = Number(minutes);
+        if (!Number.isFinite(n) || n <= 0) return 'â€”';
+        var h = Math.floor(n / 60);
+        var m = Math.round(n % 60);
+        if (m === 60) {
+            h++;
+            m = 0;
+        }
+        return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+    }
+
+    function setMessage(text, type) {
+        message.textContent = text || '';
+        message.className = 'mv-download-message' + (type ? ' ' + type : '');
+    }
+
+    function isActive(state) {
+        return state === 'starting' || state === 'downloading';
+    }
+
+    function isCached(state) {
+        return state === 'cached';
+    }
+
+    function getStatus(item) {
+        return statuses[item.MediaVaultId] || null;
+    }
+
+    function searchable(item) {
+        return [
+            item.Title,
+            item.Filename,
+            item.Type,
+            item.MediaVaultId
+        ].filter(Boolean).join(' ').toLowerCase();
+    }
+
+    function render() {
+        var query = (search.value || '').trim().toLowerCase();
+        var items;
+
+        if (mode === 'active') {
+            items = catalogue.filter(function (item) {
+                var status = getStatus(item);
+                if (!status) return false;
+                var state = String(status.Status || '').toLowerCase();
+                return isActive(state) || isCached(state);
+            });
+
+            if (query) {
+                items = items.filter(function (item) {
+                    return searchable(item).includes(query);
+                });
+            }
+
+            searchHint.textContent = query
+                ? 'Searching active downloads and cached media.'
+                : 'Showing active downloads and media already cached on the server. Use â€œSearch catalogueâ€ to find something new to download.';
+        } else {
+            items = catalogue.filter(function (item) {
+                if (!query) return false;
+                return searchable(item).includes(query);
+            });
+
+            searchHint.textContent = query
+                ? 'Search results from the full Media Vault catalogue. Download starts caching only; it does not start playback.'
+                : 'Type a title, episode, Formula 1 event or filename to search the full catalogue.';
+        }
+
+        count.textContent = items.length
+            ? items.length + ' item' + (items.length === 1 ? '' : 's')
+            : '';
+
+        if (!items.length) {
+            if (mode === 'catalogue' && !query) {
+                list.innerHTML = '<div class="mv-download-empty">Start typing to search the Media Vault catalogue.</div>';
+            } else if (mode === 'catalogue') {
+                list.innerHTML = '<div class="mv-download-empty">No catalogue items match your search.</div>';
+            } else {
+                list.innerHTML = '<div class="mv-download-empty">No active downloads or cached Media Vault items.</div>';
+            }
+            return;
+        }
+
+        list.innerHTML = items.map(function (item) {
+            var status = getStatus(item) || {};
+            var state = String(status.Status || 'not-downloaded').toLowerCase();
+            var active = isActive(state);
+            var cached = isCached(state);
+            var progress = Number.isFinite(Number(status.Progress))
+                ? Math.max(0, Math.min(100, Number(status.Progress)))
+                : 0;
+
+            var stats;
+            if (cached) {
+                stats = 'Cached Â· ' + formatBytes(status.DownloadedBytes || status.TotalBytes || 0);
+            } else if (active) {
+                stats = formatBytes(status.DownloadedBytes) + ' / ' +
+                    (Number(status.TotalBytes) > 0 ? formatBytes(status.TotalBytes) : 'Unknown size') +
+                    ' Â· ' + progress.toFixed(2) + '%';
+
+                if (Number(status.SpeedMbPerSecond) > 0) {
+                    stats += ' Â· ' + Number(status.SpeedMbPerSecond).toFixed(2) + ' MB/s';
+                }
+
+                if (status.EtaSeconds !== null && status.EtaSeconds !== undefined) {
+                    stats += ' Â· ETA ' + formatEta(status.EtaSeconds);
+                }
+            } else {
+                stats = 'Not downloaded';
+            }
+
+            var runtime = '';
+            if (status.CachedRuntimeMinutes !== null && status.CachedRuntimeMinutes !== undefined && item.RuntimeMinutes) {
+                runtime = ' Â· ~' + formatRuntime(status.CachedRuntimeMinutes) +
+                    ' / ' + formatRuntime(item.RuntimeMinutes) + ' runtime equivalent cached';
+            }
+
+            var action;
+            if (active) {
+                action = '<button is="emby-button" type="button" class="raised emby-button" data-action="cancel" data-id="' +
+                    esc(item.MediaVaultId) + '">Cancel</button>';
+            } else if (cached) {
+                action = '<button is="emby-button" type="button" class="raised emby-button" disabled>Downloaded</button>';
+            } else {
+                action = '<button is="emby-button" type="button" class="raised emby-button" data-action="download" data-id="' +
+                    esc(item.MediaVaultId) + '">Download</button>';
+            }
+
+            return '<article class="mv-download-item">' +
+                '<div class="mv-download-head">' +
+                    '<div>' +
+                        '<div class="mv-download-title">' + esc(item.Title) + '</div>' +
+                        '<div class="mv-download-meta">' + esc(item.Type) + ' Â· ' + esc(item.Filename) + '</div>' +
+                    '</div>' +
+                    '<div class="mv-download-status">' + esc(state) + '</div>' +
+                '</div>' +
+                '<div class="mv-download-progress-track">' +
+                    '<div class="mv-download-progress-bar" style="width:' + progress + '%"></div>' +
+                '</div>' +
+                '<div class="mv-download-stats">' + esc(stats) + '</div>' +
+                (runtime ? '<div class="mv-download-runtime">' + esc(runtime) + '</div>' : '') +
+                (status.Error ? '<div class="mv-download-message error">' + esc(status.Error) + '</div>' : '') +
+                '<div class="mv-download-actions">' + action + '</div>' +
+            '</article>';
+        }).join('');
+    }
+
+    function refreshData() {
+        if (refreshing) return Promise.resolve();
+        refreshing = true;
+
+        return Promise.all([
+            api('catalogue'),
+            api('')
+        ]).then(function (result) {
+            catalogue = result[0] || [];
+            statuses = {};
+            (result[1] || []).forEach(function (item) {
+                statuses[item.MediaVaultId] = item;
+            });
+            render();
+        }).catch(function (e) {
+            setMessage('Failed to load Media Vault downloads: ' + (e.message || e), 'error');
+        }).finally(function () {
+            refreshing = false;
+        });
+    }
+
+    function performAction(action, mediaVaultId, button) {
+        button.disabled = true;
+        setMessage(action === 'download' ? 'Starting downloadâ€¦' : 'Cancelling downloadâ€¦');
+
+        var request = action === 'download'
+            ? ApiClient.ajax({
+                url: ApiClient.getUrl('MediaVault/Downloads/start'),
+                type: 'POST',
+                data: JSON.stringify({ MediaVaultId: mediaVaultId }),
+                contentType: 'application/json',
+                dataType: 'json'
+            })
+            : ApiClient.ajax({
+                url: ApiClient.getUrl('MediaVault/Downloads/' + encodeURIComponent(mediaVaultId)),
+                type: 'DELETE',
+                dataType: 'json'
+            });
+
+        request.then(function () {
+            setMessage(action === 'download' ? 'Download started.' : 'Download cancelled.', 'success');
+            return refreshData();
+        }).catch(function (e) {
+            setMessage((action === 'download' ? 'Failed to start download: ' : 'Failed to cancel download: ') +
+                (e.message || e), 'error');
+            refreshData();
+        });
+    }
+
+    showActive.addEventListener('click', function () {
+        mode = 'active';
+        search.value = '';
+        setMessage('');
+        render();
+    });
+
+    showCatalogue.addEventListener('click', function () {
+        mode = 'catalogue';
+        search.focus();
+        setMessage('');
+        render();
+    });
+
+    refresh.addEventListener('click', function () {
+        setMessage('Refreshingâ€¦');
+        refreshData().then(function () {
+            setMessage('Refreshed.', 'success');
+        });
+    });
+
+    search.addEventListener('input', render);
+
+    list.addEventListener('click', function (event) {
+        var button = event.target.closest('button[data-action]');
+        if (!button) return;
+
+        var mediaVaultId = button.getAttribute('data-id');
+        var action = button.getAttribute('data-action');
+        if (!mediaVaultId || !action) return;
+
+        performAction(action, mediaVaultId, button);
+    });
+
+    root.addEventListener('pageshow', function () {
+        refreshData();
+    });
+
+    setInterval(function () {
+        if (document.hidden) return;
+        refreshData();
+    }, 1000);
+})();
+</script>
+</div>
+</body>
+</html>
+
+
